@@ -23,7 +23,7 @@ export function OptionButton({ examId, number, option, chosen, feedback, onPress
     ? { backgroundColor: colors.correctBg, borderColor: colors.correct }
     : isWrongChoice
       ? { backgroundColor: colors.wrongBg, borderColor: colors.wrong }
-      : { backgroundColor: colors.card, borderColor: colors.border };
+      : { backgroundColor: 'transparent', borderColor: colors.border };
   const markColor = isCorrect ? colors.correct : isWrongChoice ? colors.wrong : colors.muted;
 
   return (

@@ -20,6 +20,7 @@ export default function RootLayout() {
           <Stack.Screen name="index" options={{ title: 'PET Helper' }} />
           <Stack.Screen name="practice/[domain]" options={{ title: '' }} />
           <Stack.Screen name="formula-sheet" options={{ title: 'דף נוסחאות', presentation: 'modal' }} />
+          <Stack.Screen name="about" options={{ title: 'על השאלות' }} />
         </Stack>
       </PracticeProvider>
       <StatusBar style="auto" />

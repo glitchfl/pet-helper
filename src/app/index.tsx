@@ -40,6 +40,12 @@ export default function HomeScreen() {
           </Pressable>
         </Link>
       ))}
+
+      <Link href="/about" asChild>
+        <Pressable accessibilityRole="link" hitSlop={8} style={styles.about}>
+          <Text style={[styles.aboutLabel, { color: colors.accent }]}>על השאלות ומקורן</Text>
+        </Pressable>
+      </Link>
     </ScrollView>
   );
 }
@@ -74,4 +80,6 @@ const styles = StyleSheet.create({
   stat: { gap: 2 },
   statValue: { fontSize: 18, fontWeight: '600', fontVariant: ['tabular-nums'] },
   statLabel: { fontSize: 13 },
+  about: { marginTop: 10, alignSelf: 'flex-start' },
+  aboutLabel: { fontSize: 16, fontWeight: '600' },
 });

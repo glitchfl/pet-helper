@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Domain, OptionNumber } from '@/bank/types';
 import type { CurrentQuestion, Feedback } from '@/engine/practice-engine';
+import { CopyrightLine, Watermark } from '@/practice/NiteMarkings';
 import { PassageText } from '@/practice/PassageText';
 import { usePracticeEngine } from '@/practice/PracticeProvider';
 import { QuestionCard } from '@/practice/QuestionCard';
@@ -86,7 +87,9 @@ function PracticeScreen({ domain }: { domain: Domain }) {
           <SetTabs tab={tab} setLabel="קטע הקריאה" questionLabel={setPosition} onChange={setTab} />
           <ScrollView key={questionSet.id} style={tab !== 'set' && styles.hidden} contentContainerStyle={styles.content}>
             <View style={[styles.setCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Watermark />
               <PassageText passage={questionSet} />
+              <CopyrightLine />
             </View>
           </ScrollView>
         </>
@@ -105,6 +108,7 @@ function PracticeScreen({ domain }: { domain: Domain }) {
           )}
           <QuestionCard
             examId={served.exam.id}
+            sample={served.exam.sample}
             question={served.question}
             chosen={chosen}
             feedback={feedback}
@@ -158,7 +162,7 @@ const styles = StyleSheet.create({
   headerButton: { fontSize: 16, fontWeight: '600' },
   content: { padding: 16, paddingBottom: 32 },
   hidden: { display: 'none' },
-  setCard: { borderWidth: 1, borderRadius: 16, padding: 18 },
+  setCard: { borderWidth: 1, borderRadius: 16, padding: 18, gap: 12, overflow: 'hidden' },
   chart: { gap: 8, marginBottom: 14 },
   setPosition: { fontSize: 14 },
   bar: { borderTopWidth: StyleSheet.hairlineWidth, paddingHorizontal: 16, paddingTop: 12, gap: 10 },

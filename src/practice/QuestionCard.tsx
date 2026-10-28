@@ -4,23 +4,27 @@ import type { Feedback } from '@/engine/practice-engine';
 import { BankImage } from '@/ui/BankImage';
 import { RichText } from '@/ui/RichText';
 import { useColors } from '@/ui/theme';
+import { CopyrightLine, Watermark } from './NiteMarkings';
 import { OptionButton } from './OptionButton';
 
 type Props = {
   examId: string;
+  sample?: boolean;
   question: Question;
   chosen?: OptionNumber;
   feedback?: Feedback;
   onRespond: (option: OptionNumber) => void;
 };
 
-export function QuestionCard({ examId, question, chosen, feedback, onRespond }: Props) {
+export function QuestionCard({ examId, sample, question, chosen, feedback, onRespond }: Props) {
   const colors = useColors();
 
   return (
     <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <Watermark />
       <Text style={[styles.meta, { color: colors.muted }]}>
         שאלה {question.number} · {question.questionType}
+        {sample && ' · שאלת דוגמה'}
       </Text>
       <RichText value={question.stem} color={colors.text} fontSize={19} lineHeight={29} />
       {question.figure && <BankImage examId={examId} path={question.figure} maxHeight={320} />}
@@ -37,6 +41,7 @@ export function QuestionCard({ examId, question, chosen, feedback, onRespond }: 
           />
         ))}
       </View>
+      <CopyrightLine />
     </View>
   );
 }

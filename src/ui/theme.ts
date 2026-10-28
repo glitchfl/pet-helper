@@ -12,6 +12,7 @@ const light = {
   correctBg: '#E2F2E7',
   wrong: '#B3261E',
   wrongBg: '#FBE6E4',
+  watermark: 'rgba(0, 0, 0, 0.055)',
 };
 
 export type Colors = typeof light;
@@ -28,6 +29,7 @@ const dark: Colors = {
   correctBg: '#15301F',
   wrong: '#F28B82',
   wrongBg: '#3B1A18',
+  watermark: 'rgba(255, 255, 255, 0.07)',
 };
 
 export function useColors(): Colors {
