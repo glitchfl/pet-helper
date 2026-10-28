@@ -32,6 +32,10 @@ export function checkBank(bank: Exam[], { imageExists }: Options): string[] {
     const image = (owner: string, path: ImagePath) => {
       if (!imageExists(exam, path)) problems.push(`${owner}: image ${path} does not exist`);
     };
+    const math = (owner: string, value: RichText) => {
+      const error = mathProblem(value);
+      if (error) problems.push(`${owner}: has math that cannot be typeset - ${error}`);
+    };
     if (exam.formulaSheet) image(exam.id, exam.formulaSheet);
 
     for (const section of exam.sections) {
@@ -44,10 +48,6 @@ export function checkBank(bank: Exam[], { imageExists }: Options): string[] {
 
       for (const question of section.questions) {
         const problem = (text: string) => problems.push(`${question.id}: ${text}`);
-        const math = (value: RichText) => {
-          const error = mathProblem(value);
-          if (error) problem(`has math that cannot be typeset - ${error}`);
-        };
         claimId(question.id);
 
         if (question.options.length !== 4) problem(`has ${question.options.length} Options instead of 4`);
@@ -63,18 +63,21 @@ export function checkBank(bank: Exam[], { imageExists }: Options): string[] {
           problem(`points at Question Set ${question.questionSetId}, which does not list it`);
         }
 
-        math(question.stem);
+        math(question.id, question.stem);
         if (question.figure) image(question.id, question.figure);
         for (const option of question.options) {
           if ('image' in option) image(question.id, option.image);
-          else math(option.text);
+          else math(question.id, option.text);
         }
       }
     }
 
     for (const questionSet of exam.questionSets) {
       claimId(questionSet.id);
-      if (questionSet.kind === 'chart') image(questionSet.id, questionSet.image);
+      if (questionSet.kind === 'chart') {
+        image(questionSet.id, questionSet.image);
+        if (questionSet.intro) math(questionSet.id, questionSet.intro);
+      }
 
       const first = questionSet.questionIds[0];
       const section = exam.sections.find((candidate) => candidate.questions.some((question) => question.id === first));

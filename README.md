@@ -32,7 +32,7 @@ Rich text is Hebrew with math as inline LaTeX between `$` signs, e.g. `אם $x^2
 
 Only Exams on NITE's public-use approved list may be added (see [ADR 0001](docs/adr/0001-only-nite-public-use-approved-exams.md)).
 
-The bank holds the Verbal Sections of Autumn 2026. The `sample-summer-2026` Exam is hand-written sample content for development, not NITE material, and stands in for the Quantitative Domain until the real one is extracted.
+The bank holds the Autumn 2026 Exam.
 
 ### Extracting an Exam
 
@@ -42,10 +42,15 @@ The scripts in `scripts/extract` read an Exam PDF with PyMuPDF. The PDFs and the
 python3 -m venv .venv && .venv/bin/pip install -r scripts/extract/requirements.txt
 .venv/bin/python scripts/extract/extract.py inspect exam.pdf                      # re-check Sections, Question counts, Answer Key
 .venv/bin/python scripts/extract/extract.py verbal exam.pdf --exam autumn-2026    # writes bank/autumn-2026/exam.json
+.venv/bin/python scripts/extract/extract.py pages exam.pdf --exam autumn-2026 --pages 22 24   # grid renders for reading off crop rectangles
+.venv/bin/python scripts/extract/extract.py crop exam.pdf --exam autumn-2026      # cuts what scripts/extract/crops/autumn-2026.json lists
+.venv/bin/python scripts/extract/extract.py quant exam.pdf --exam autumn-2026     # Quantitative draft that points at those crops
 .venv/bin/python scripts/extract/extract.py proof exam.pdf --exam autumn-2026     # proof/autumn-2026/index.html
 ```
 
 `verbal` rebuilds the text from glyph positions, which fixes the flipped brackets and moved punctuation of the PDF's text layer. It also puts back the fill-in blanks as `____`. Vowel marks still need a look against the page, because the PDF orders them inconsistently. `verbal` refuses to overwrite Sections that already exist, since they may hold fixes made by hand.
+
+The Quantitative PDF text is never trusted for math. The `quant` draft holds the raw text only as a reference, and every stem and Option is retyped as LaTeX from the rendered page, with a Topic for each Question. Figures, Charts, image Options and the Formula Sheet are cropped at 288 dpi in grayscale. The pale watermark is whitened out, and the app draws NITE's markings on the card instead. A crop's `blank` list paints over stray text inside its rectangle.
 
 Skim the Proof Sheet once per Exam before shipping it.
 

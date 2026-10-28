@@ -44,6 +44,7 @@ export type ChartSet = {
   kind: 'chart';
   questionIds: string[];
   image: ImagePath;
+  intro?: RichText;
 };
 
 export type QuestionSet = PassageSet | ChartSet;

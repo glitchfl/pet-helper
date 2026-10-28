@@ -155,3 +155,10 @@ test('math that cannot be typeset fails', () => {
   expect(problems[0]).toContain('q2');
   expect(problems[1]).toContain('q3');
 });
+
+test('a Chart intro with math that cannot be typeset fails', () => {
+  const bank = wellFormed();
+  Object.assign(questionSet(bank, 'c1'), { intro: 'בתרשים $\\frac{1}{2$ מהנתונים' });
+
+  expectOneProblemAbout(checkBank(bank, imagesExist), 'c1');
+});

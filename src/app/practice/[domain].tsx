@@ -11,6 +11,7 @@ import { QuestionCard } from '@/practice/QuestionCard';
 import { reportUrl } from '@/practice/report';
 import { SetTabs, type SetTab } from '@/practice/SetTabs';
 import { BankImage } from '@/ui/BankImage';
+import { RichText } from '@/ui/RichText';
 import { DOMAIN_NAMES, isDomain } from '@/ui/strings';
 import { useColors } from '@/ui/theme';
 
@@ -103,6 +104,7 @@ function PracticeScreen({ domain }: { domain: Domain }) {
         >
           {questionSet?.kind === 'chart' && (
             <View style={styles.chart}>
+              {questionSet.intro && <RichText value={questionSet.intro} color={colors.text} fontSize={15} lineHeight={23} />}
               <BankImage examId={served.exam.id} path={questionSet.image} />
               <Text style={[styles.setPosition, { color: colors.muted }]}>{setPosition} על התרשים</Text>
             </View>

@@ -121,7 +121,7 @@ def section_json(exam_id: str, section: Section, key: dict[int, int], crops: dic
             # passages render as plain text - escaping a $ here would shift every later line marker
             entry |= {'text': text, 'lineMarkers': markers}
         else:
-            entry |= {'image': f'images/s{section.number}-chart{index + 1}.png', 'text': join_lines(question_set.lines)}
+            entry |= {'image': f'images/s{section.number}-chart{index + 1}.png', 'intro': join_lines(question_set.lines)}
         entry['questionIds'] = [question_id(exam_id, section, question.number) for question in members]
         sets.append(entry)
 
@@ -189,6 +189,8 @@ def crop(doc: pymupdf.Document, exam_id: str) -> None:
     whiten = bytes(255 if value >= WATERMARK_GREY else value for value in range(256))
     for name, spec in crops.items():
         page = doc[spec['page'] - 1]
+        for blank in spec.get('blank', []):
+            page.draw_rect(pymupdf.Rect(blank), color=None, fill=(1, 1, 1), overlay=True)
         pixmap = page.get_pixmap(dpi=CROP_DPI, clip=pymupdf.Rect(spec['rect']), colorspace=pymupdf.csGRAY)
         clean = pymupdf.Pixmap(pymupdf.csGRAY, pixmap.width, pixmap.height, pixmap.samples.translate(whiten), False)
         clean.save(images / name)

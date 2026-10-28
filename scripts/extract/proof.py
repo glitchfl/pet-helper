@@ -64,7 +64,7 @@ def write_proof(doc: pymupdf.Document, sections: list[Section], exam: dict, out_
                 app = (
                     _passage(question_set)
                     if question_set['kind'] == 'passage'
-                    else _rich(question_set.get('text', '')) + image(question_set['image'])
+                    else _rich(question_set.get('intro', '')) + image(question_set['image'])
                 )
                 body.append(f'<div class="row set"><div class="app">{app}</div><img class="pdf" src="crops/{name}"></div>')
 
