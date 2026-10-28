@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { OptionNumber, Question } from '@/bank/types';
 import type { Feedback } from '@/engine/practice-engine';
 import { BankImage } from '@/ui/BankImage';
@@ -14,18 +14,24 @@ type Props = {
   chosen?: OptionNumber;
   feedback?: Feedback;
   onRespond: (option: OptionNumber) => void;
+  onReport: () => void;
 };
 
-export function QuestionCard({ examId, sample, question, chosen, feedback, onRespond }: Props) {
+export function QuestionCard({ examId, sample, question, chosen, feedback, onRespond, onReport }: Props) {
   const colors = useColors();
 
   return (
     <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
       <Watermark />
-      <Text style={[styles.meta, { color: colors.muted }]}>
-        שאלה {question.number} · {question.questionType}
-        {sample && ' · שאלת דוגמה'}
-      </Text>
+      <View style={styles.header}>
+        <Text style={[styles.meta, { color: colors.muted }]}>
+          שאלה {question.number} · {question.questionType}
+          {sample && ' · שאלת דוגמה'}
+        </Text>
+        <Pressable onPress={onReport} accessibilityRole="link" hitSlop={10}>
+          <Text style={[styles.report, { color: colors.accent }]}>דיווח על טעות</Text>
+        </Pressable>
+      </View>
       <RichText value={question.stem} color={colors.text} fontSize={19} lineHeight={29} />
       {question.figure && <BankImage examId={examId} path={question.figure} maxHeight={320} />}
       <View style={styles.options}>
@@ -48,6 +54,8 @@ export function QuestionCard({ examId, sample, question, chosen, feedback, onRes
 
 const styles = StyleSheet.create({
   card: { borderWidth: 1, borderRadius: 16, padding: 18, gap: 14, overflow: 'hidden' },
-  meta: { fontSize: 14 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
+  meta: { fontSize: 14, flexShrink: 1 },
+  report: { fontSize: 14, fontWeight: '600' },
   options: { gap: 10 },
 });

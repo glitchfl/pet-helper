@@ -1,6 +1,6 @@
 import { Link, Stack, Unmatched, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Domain, OptionNumber } from '@/bank/types';
 import type { CurrentQuestion, Feedback } from '@/engine/practice-engine';
@@ -8,6 +8,7 @@ import { CopyrightLine, Watermark } from '@/practice/NiteMarkings';
 import { PassageText } from '@/practice/PassageText';
 import { usePracticeEngine } from '@/practice/PracticeProvider';
 import { QuestionCard } from '@/practice/QuestionCard';
+import { reportUrl } from '@/practice/report';
 import { SetTabs, type SetTab } from '@/practice/SetTabs';
 import { BankImage } from '@/ui/BankImage';
 import { DOMAIN_NAMES, isDomain } from '@/ui/strings';
@@ -113,6 +114,7 @@ function PracticeScreen({ domain }: { domain: Domain }) {
             chosen={chosen}
             feedback={feedback}
             onRespond={respond}
+            onReport={() => Linking.openURL(reportUrl(served))}
           />
         </ScrollView>
       )}
