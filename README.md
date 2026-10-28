@@ -45,6 +45,7 @@ python3 -m venv .venv && .venv/bin/pip install -r scripts/extract/requirements.t
 .venv/bin/python scripts/extract/extract.py pages exam.pdf --exam autumn-2026 --pages 22 24   # grid renders for reading off crop rectangles
 .venv/bin/python scripts/extract/extract.py crop exam.pdf --exam autumn-2026      # cuts what scripts/extract/crops/autumn-2026.json lists
 .venv/bin/python scripts/extract/extract.py quant exam.pdf --exam autumn-2026     # Quantitative draft that points at those crops
+.venv/bin/python scripts/extract/extract.py apply --exam autumn-2026 --retyped retyped.json   # puts the retyped LaTeX and Topics in
 .venv/bin/python scripts/extract/extract.py proof exam.pdf --exam autumn-2026     # proof/autumn-2026/index.html
 ```
 

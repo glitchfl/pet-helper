@@ -3,6 +3,7 @@
     inspect  re-check the template facts (Sections, Question counts, Answer Key) before trusting them
     verbal   write the Verbal Sections into bank/<exam>/exam.json
     quant    write a Quantitative draft whose stems and Options still need retyping as LaTeX
+    apply    put the retyped Quantitative content from a JSON file into bank/<exam>/exam.json
     pages    render pages with a grid in points, for reading off crop rectangles
     crop     cut the Figures, Charts, image Options and Formula Sheet listed in crops/<exam>.json
     proof    build the Proof Sheet that shows each Question next to its crop from the PDF
@@ -180,6 +181,36 @@ def write_domain(doc: pymupdf.Document, sections: list[Section], exam_id: str, d
     save_exam(dict(sorted(exam.items(), key=lambda item: EXAM_KEYS.index(item[0]))))
 
 
+def apply_retyped(exam_id: str, path: Path) -> None:
+    # keys are "<section>-<question>" for Questions and "<section>-chart<i>" for a Chart's intro
+    retyped = json.loads(path.read_text('utf8'))
+    exam = load_exam(exam_id)
+    missing = []
+    for section in exam['sections']:
+        if section['domain'] != 'quantitative':
+            continue
+        for question in section['questions']:
+            entry = retyped.pop(f'{section["number"]}-{question["number"]}', None)
+            if entry is None:
+                missing.append(question['id'])
+                continue
+            question['topic'] = entry['topic']
+            question['stem'] = entry['stem']
+            if 'options' in entry:
+                if len(entry['options']) != 4:
+                    raise SystemExit(f'{question["id"]}: retyped {len(entry["options"])} Options instead of 4')
+                question['options'] = [{'text': text} for text in entry['options']]
+    for question_set in exam['questionSets']:
+        key = question_set['id'].removeprefix(f'{exam_id}-s')
+        if question_set['kind'] == 'chart' and key in retyped:
+            question_set['intro'] = retyped.pop(key)
+    if retyped:
+        raise SystemExit(f'nothing in {exam_id} matches {sorted(retyped)} - exam.json is unchanged')
+    save_exam(exam)
+    if missing:
+        print(f'still the raw draft: {missing}')
+
+
 def crop(doc: pymupdf.Document, exam_id: str) -> None:
     crops = load_crops(exam_id)
     if not crops:
@@ -221,14 +252,22 @@ def render_pages(doc: pymupdf.Document, exam_id: str, pages: list[int]) -> None:
 
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('command', choices=['inspect', 'verbal', 'quant', 'pages', 'crop', 'proof'])
-    parser.add_argument('pdf', type=Path)
+    parser.add_argument('command', choices=['inspect', 'verbal', 'quant', 'apply', 'pages', 'crop', 'proof'])
+    parser.add_argument('pdf', type=Path, nargs='?', help='the Exam PDF - every command but apply reads it')
     parser.add_argument('--exam', help='the Exam id, <season>-<year>, e.g. autumn-2026')
     parser.add_argument('--force', action='store_true', help='overwrite Sections that already exist')
     parser.add_argument('--pages', type=int, nargs='+', help='PDF page numbers for the pages command')
+    parser.add_argument('--retyped', type=Path, help='the JSON file of retyped content for the apply command')
     args = parser.parse_args(argv)
     if args.command != 'inspect' and not args.exam:
         parser.error('--exam is required')
+    if args.command == 'apply':
+        if not args.retyped:
+            parser.error('apply needs --retyped')
+        apply_retyped(args.exam, args.retyped)
+        return 0
+    if not args.pdf:
+        parser.error(f'{args.command} needs the Exam PDF')
 
     doc = pymupdf.open(args.pdf)
     if args.command in ('pages', 'crop'):
