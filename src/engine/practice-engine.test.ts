@@ -199,3 +199,35 @@ describe('serving', () => {
     expect(() => engine.next()).toThrow();
   });
 });
+
+describe('progress', () => {
+  test('nothing is seen before the first Response', async () => {
+    const { engine } = await engineFor(fixtureBank({ verbal: ['v1', 'v2'], quantitative: ['q1'] }));
+
+    expect(engine.progress('verbal')).toEqual({ total: 2, seen: 0, percentCorrect: null, mistakes: 0 });
+  });
+
+  test('counts seen Questions, percentage correct by most recent Response, and Mistakes', async () => {
+    const { engine } = await engineFor(fixtureBank({ verbal: ['v1', 'v2', 'v3', 'v4', 'v5'], quantitative: ['q1'] }), {
+      responses: [saved('v1', false, 1), saved('v2', false, 2), saved('v3', true, 3), saved('v1', true, 4), saved('q1', false, 5)],
+    });
+
+    expect(engine.progress('verbal')).toEqual({ total: 5, seen: 3, percentCorrect: 67, mistakes: 1 });
+  });
+
+  test('a skipped Question does not count as seen', async () => {
+    const { engine } = await engineFor(fixtureBank({ verbal: ['v1', 'v2'] }), { responses: [saved('v1', true)] });
+    engine.start('verbal');
+    engine.skip();
+
+    expect(engine.progress('verbal')).toMatchObject({ seen: 1, percentCorrect: 100 });
+  });
+
+  test('a new Response shows up in the progress at once', async () => {
+    const { engine } = await engineFor(fixtureBank({ quantitative: ['q1', 'q2'] }));
+    engine.start('quantitative');
+    await engine.respond(WRONG);
+
+    expect(engine.progress('quantitative')).toEqual({ total: 2, seen: 1, percentCorrect: 0, mistakes: 1 });
+  });
+});

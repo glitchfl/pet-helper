@@ -9,12 +9,20 @@ export type CurrentQuestion = {
   question: Question;
 };
 
+export type Progress = {
+  total: number;
+  seen: number;
+  percentCorrect: number | null;
+  mistakes: number;
+};
+
 export type PracticeEngine = {
   start(domain: Domain): void;
   current(): CurrentQuestion;
   respond(option: OptionNumber): Promise<Feedback>;
   skip(): void;
   next(): void;
+  progress(domain: Domain): Progress;
 };
 
 type Deps = {
@@ -130,6 +138,19 @@ export async function createPracticeEngine({ bank, store, clock, random }: Deps)
       const { question } = current();
       if (!responded) throw new Error(`Question ${question.id} has no Response yet`);
       advance();
+    },
+
+    progress(domain) {
+      const questions = unitsOf(bank, domain).flatMap((candidate) => candidate.questions);
+      const latestResponses = questions.flatMap((question) => latest.get(question.id) ?? []);
+      const correct = latestResponses.filter((response) => response.correct).length;
+      const seen = latestResponses.length;
+      return {
+        total: questions.length,
+        seen,
+        percentCorrect: seen === 0 ? null : Math.round((correct / seen) * 100),
+        mistakes: seen - correct,
+      };
     },
   };
 }
