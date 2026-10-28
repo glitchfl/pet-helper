@@ -8,6 +8,7 @@ import { PassageText } from '@/practice/PassageText';
 import { usePracticeEngine } from '@/practice/PracticeProvider';
 import { QuestionCard } from '@/practice/QuestionCard';
 import { SetTabs, type SetTab } from '@/practice/SetTabs';
+import { BankImage } from '@/ui/BankImage';
 import { DOMAIN_NAMES, isDomain } from '@/ui/strings';
 import { useColors } from '@/ui/theme';
 
@@ -27,10 +28,15 @@ function PracticeScreen({ domain }: { domain: Domain }) {
   const locked = useRef(false);
 
   const formulaSheetExam = domain === 'quantitative' && served?.exam.formulaSheet ? served.exam.id : undefined;
+  const questionSet = served?.questionSet;
+  const setPosition = questionSet
+    ? `שאלה ${questionSet.questionIds.indexOf(served.question.id) + 1} מתוך ${questionSet.questionIds.length}`
+    : '';
 
   function show(next: CurrentQuestion) {
     setServed(next);
-    setTab(next.questionSet?.questionIds[0] === next.question.id ? 'set' : 'question');
+    const opensPassage = next.questionSet?.kind === 'passage' && next.questionSet.questionIds[0] === next.question.id;
+    setTab(opensPassage ? 'set' : 'question');
   }
 
   useEffect(() => {
@@ -75,21 +81,12 @@ function PracticeScreen({ domain }: { domain: Domain }) {
             : undefined,
         }}
       />
-      {served?.questionSet && (
+      {questionSet?.kind === 'passage' && (
         <>
-          <SetTabs
-            tab={tab}
-            setLabel="קטע הקריאה"
-            questionLabel={`שאלה ${served.questionSet.questionIds.indexOf(served.question.id) + 1} מתוך ${served.questionSet.questionIds.length}`}
-            onChange={setTab}
-          />
-          <ScrollView
-            key={served.questionSet.id}
-            style={tab !== 'set' && styles.hidden}
-            contentContainerStyle={styles.content}
-          >
+          <SetTabs tab={tab} setLabel="קטע הקריאה" questionLabel={setPosition} onChange={setTab} />
+          <ScrollView key={questionSet.id} style={tab !== 'set' && styles.hidden} contentContainerStyle={styles.content}>
             <View style={[styles.setCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              {served.questionSet.kind === 'passage' && <PassageText passage={served.questionSet} />}
+              <PassageText passage={questionSet} />
             </View>
           </ScrollView>
         </>
@@ -100,6 +97,12 @@ function PracticeScreen({ domain }: { domain: Domain }) {
           style={tab !== 'question' && styles.hidden}
           contentContainerStyle={styles.content}
         >
+          {questionSet?.kind === 'chart' && (
+            <View style={styles.chart}>
+              <BankImage examId={served.exam.id} path={questionSet.image} />
+              <Text style={[styles.setPosition, { color: colors.muted }]}>{setPosition} על התרשים</Text>
+            </View>
+          )}
           <QuestionCard
             examId={served.exam.id}
             question={served.question}
@@ -156,6 +159,8 @@ const styles = StyleSheet.create({
   content: { padding: 16, paddingBottom: 32 },
   hidden: { display: 'none' },
   setCard: { borderWidth: 1, borderRadius: 16, padding: 18 },
+  chart: { gap: 8, marginBottom: 14 },
+  setPosition: { fontSize: 14 },
   bar: { borderTopWidth: StyleSheet.hairlineWidth, paddingHorizontal: 16, paddingTop: 12, gap: 10 },
   verdict: { fontSize: 17, fontWeight: '600' },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },

@@ -406,6 +406,75 @@
             }
           ],
           "correctOption": 2
+        },
+        {
+          "id": "sample-summer-2026-s2-q10",
+          "number": 10,
+          "questionType": "הסקה מתרשים",
+          "topic": "סטטיסטיקה",
+          "stem": "באיזה חודש הושאלו הכי הרבה ספרים?",
+          "options": [
+            {
+              "text": "ינואר"
+            },
+            {
+              "text": "מרץ"
+            },
+            {
+              "text": "אפריל"
+            },
+            {
+              "text": "מאי"
+            }
+          ],
+          "correctOption": 3,
+          "questionSetId": "sample-summer-2026-s2-chart1"
+        },
+        {
+          "id": "sample-summer-2026-s2-q11",
+          "number": 11,
+          "questionType": "הסקה מתרשים",
+          "topic": "סטטיסטיקה",
+          "stem": "מהו הממוצע החודשי של מספר הספרים שהושאלו בתקופה המוצגת (באלפים)?",
+          "options": [
+            {
+              "text": "$12$"
+            },
+            {
+              "text": "$13$"
+            },
+            {
+              "text": "$13.5$"
+            },
+            {
+              "text": "$14$"
+            }
+          ],
+          "correctOption": 2,
+          "questionSetId": "sample-summer-2026-s2-chart1"
+        },
+        {
+          "id": "sample-summer-2026-s2-q12",
+          "number": 12,
+          "questionType": "הסקה מתרשים",
+          "topic": "סטטיסטיקה",
+          "stem": "בכמה אחוזים גדל מספר הספרים שהושאלו ממרץ לאפריל?",
+          "options": [
+            {
+              "text": "$50\\%$"
+            },
+            {
+              "text": "$90\\%$"
+            },
+            {
+              "text": "$100\\%$"
+            },
+            {
+              "text": "$200\\%$"
+            }
+          ],
+          "correctOption": 3,
+          "questionSetId": "sample-summer-2026-s2-chart1"
         }
       ]
     }
@@ -439,6 +508,16 @@
           "offset": 989
         }
       ]
+    },
+    {
+      "id": "sample-summer-2026-s2-chart1",
+      "kind": "chart",
+      "questionIds": [
+        "sample-summer-2026-s2-q10",
+        "sample-summer-2026-s2-q11",
+        "sample-summer-2026-s2-q12"
+      ],
+      "image": "images/s2-chart1.png"
     }
   ]
 }

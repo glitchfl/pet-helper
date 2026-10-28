@@ -1,6 +1,6 @@
 import { createPracticeEngine, type PracticeEngine } from './practice-engine';
 import { createMemoryResponseStore, type Response } from './response-store';
-import { CORRECT, WRONG, fakeClock, fixtureBank, passage, seededRandom } from './test-bank';
+import { CORRECT, WRONG, chart, fakeClock, fixtureBank, passage, seededRandom } from './test-bank';
 import type { Exam, OptionNumber } from '@/bank/types';
 
 function saved(questionId: string, correct: boolean, answeredAt = 0): Response {
@@ -240,6 +240,22 @@ describe('Question Sets', () => {
     const served = (await answerServed(engine, 8)).join(' ');
 
     expect(['v1 v2 v3 v4 v1 v2 v3 v4', 'v2 v3 v4 v1 v2 v3 v4 v1']).toContain(served);
+  });
+
+  test('a Chart and all its Questions are served as one block, in printed order', async () => {
+    const { engine } = await engineFor(fixtureBank({ quantitative: [chart('c1', ['q1', 'q2', 'q3']), 'q4'] }));
+    engine.start('quantitative');
+
+    const served = (await answerServed(engine, 8)).join(' ');
+
+    expect(['q1 q2 q3 q4 q1 q2 q3 q4', 'q4 q1 q2 q3 q4 q1 q2 q3']).toContain(served);
+  });
+
+  test('each Question in a Chart Set comes with its Chart', async () => {
+    const { engine } = await engineFor(fixtureBank({ quantitative: [chart('c1', ['q1', 'q2'])] }));
+    engine.start('quantitative');
+
+    expect(engine.current().questionSet).toMatchObject({ id: 'c1', kind: 'chart', image: 'chart.png' });
   });
 
   test('each Question in a Set comes with its Passage', async () => {
