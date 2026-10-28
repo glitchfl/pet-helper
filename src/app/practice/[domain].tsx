@@ -4,8 +4,10 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Domain, OptionNumber } from '@/bank/types';
 import type { CurrentQuestion, Feedback } from '@/engine/practice-engine';
+import { PassageText } from '@/practice/PassageText';
 import { usePracticeEngine } from '@/practice/PracticeProvider';
 import { QuestionCard } from '@/practice/QuestionCard';
+import { SetTabs, type SetTab } from '@/practice/SetTabs';
 import { DOMAIN_NAMES, isDomain } from '@/ui/strings';
 import { useColors } from '@/ui/theme';
 
@@ -21,11 +23,17 @@ function PracticeScreen({ domain }: { domain: Domain }) {
   const [served, setServed] = useState<CurrentQuestion>();
   const [chosen, setChosen] = useState<OptionNumber>();
   const [feedback, setFeedback] = useState<Feedback>();
+  const [tab, setTab] = useState<SetTab>('question');
   const locked = useRef(false);
+
+  function show(next: CurrentQuestion) {
+    setServed(next);
+    setTab(next.questionSet?.questionIds[0] === next.question.id ? 'set' : 'question');
+  }
 
   useEffect(() => {
     engine.start(domain);
-    setServed(engine.current());
+    show(engine.current());
   }, [engine, domain]);
 
   async function respond(option: OptionNumber) {
@@ -44,7 +52,7 @@ function PracticeScreen({ domain }: { domain: Domain }) {
   function move(action: () => void) {
     action();
     locked.current = false;
-    setServed(engine.current());
+    show(engine.current());
     setChosen(undefined);
     setFeedback(undefined);
   }
@@ -52,8 +60,31 @@ function PracticeScreen({ domain }: { domain: Domain }) {
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
       <Stack.Screen options={{ title: DOMAIN_NAMES[domain] }} />
+      {served?.questionSet && (
+        <>
+          <SetTabs
+            tab={tab}
+            setLabel="קטע הקריאה"
+            questionLabel={`שאלה ${served.questionSet.questionIds.indexOf(served.question.id) + 1} מתוך ${served.questionSet.questionIds.length}`}
+            onChange={setTab}
+          />
+          <ScrollView
+            key={served.questionSet.id}
+            style={tab !== 'set' && styles.hidden}
+            contentContainerStyle={styles.content}
+          >
+            <View style={[styles.setCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              {served.questionSet.kind === 'passage' && <PassageText passage={served.questionSet} />}
+            </View>
+          </ScrollView>
+        </>
+      )}
       {served && (
-        <ScrollView key={served.question.id} contentContainerStyle={styles.content}>
+        <ScrollView
+          key={served.question.id}
+          style={tab !== 'question' && styles.hidden}
+          contentContainerStyle={styles.content}
+        >
           <QuestionCard question={served.question} chosen={chosen} feedback={feedback} onRespond={respond} />
         </ScrollView>
       )}
@@ -72,6 +103,14 @@ function PracticeScreen({ domain }: { domain: Domain }) {
               <Text style={[styles.nextLabel, { color: colors.onAccent }]}>הבא</Text>
             </Pressable>
           </>
+        ) : tab === 'set' ? (
+          <Pressable
+            onPress={() => setTab('question')}
+            accessibilityRole="button"
+            style={({ pressed }) => [styles.next, { backgroundColor: colors.accent, opacity: pressed ? 0.8 : 1 }]}
+          >
+            <Text style={[styles.nextLabel, { color: colors.onAccent }]}>לשאלה</Text>
+          </Pressable>
         ) : (
           <View style={styles.row}>
             <Text style={[styles.hint, { color: colors.muted }]}>בחרו תשובה</Text>
@@ -93,6 +132,8 @@ function PracticeScreen({ domain }: { domain: Domain }) {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { padding: 16, paddingBottom: 32 },
+  hidden: { display: 'none' },
+  setCard: { borderWidth: 1, borderRadius: 16, padding: 18 },
   bar: { borderTopWidth: StyleSheet.hairlineWidth, paddingHorizontal: 16, paddingTop: 12, gap: 10 },
   verdict: { fontSize: 17, fontWeight: '600' },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },

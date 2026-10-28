@@ -1,4 +1,4 @@
-import type { Domain, Exam, OptionNumber, Question, QuestionBank, Section } from '@/bank/types';
+import type { Domain, Exam, OptionNumber, Question, QuestionBank, QuestionSet, Section } from '@/bank/types';
 import type { Response, ResponseStore } from './response-store';
 
 export type Feedback = { correct: boolean; correctOption: OptionNumber };
@@ -6,6 +6,7 @@ export type Feedback = { correct: boolean; correctOption: OptionNumber };
 export type CurrentQuestion = {
   exam: Exam;
   section: Section;
+  questionSet?: QuestionSet;
   question: Question;
 };
 
@@ -35,6 +36,7 @@ type Deps = {
 type Unit = {
   exam: Exam;
   section: Section;
+  questionSet?: QuestionSet;
   questions: Question[];
 };
 
@@ -43,11 +45,29 @@ const MISTAKE = 1;
 const REST = 2;
 
 function unitsOf(bank: QuestionBank, domain: Domain): Unit[] {
-  return bank.flatMap((exam) =>
-    exam.sections
-      .filter((section) => section.domain === domain)
-      .flatMap((section) => section.questions.map((question) => ({ exam, section, questions: [question] }))),
-  );
+  const units: Unit[] = [];
+  for (const exam of bank) {
+    const sets = new Map(exam.questionSets.map((questionSet) => [questionSet.id, questionSet]));
+    for (const section of exam.sections) {
+      if (section.domain !== domain) continue;
+      const setUnits = new Map<string, Unit>();
+      for (const question of section.questions) {
+        const questionSet = question.questionSetId ? sets.get(question.questionSetId) : undefined;
+        if (!questionSet) {
+          units.push({ exam, section, questions: [question] });
+          continue;
+        }
+        let unit = setUnits.get(questionSet.id);
+        if (!unit) {
+          unit = { exam, section, questionSet, questions: [] };
+          setUnits.set(questionSet.id, unit);
+          units.push(unit);
+        }
+        unit.questions.push(question);
+      }
+    }
+  }
+  return units;
 }
 
 export async function createPracticeEngine({ bank, store, clock, random }: Deps): Promise<PracticeEngine> {
@@ -93,8 +113,8 @@ export async function createPracticeEngine({ bank, store, clock, random }: Deps)
   }
 
   function current(): CurrentQuestion {
-    const { exam, section, questions } = requireUnit();
-    return { exam, section, question: questions[position] };
+    const { exam, section, questionSet, questions } = requireUnit();
+    return { exam, section, questionSet, question: questions[position] };
   }
 
   return {

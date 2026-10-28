@@ -1,6 +1,6 @@
 import { createPracticeEngine, type PracticeEngine } from './practice-engine';
 import { createMemoryResponseStore, type Response } from './response-store';
-import { CORRECT, WRONG, fakeClock, fixtureBank, seededRandom } from './test-bank';
+import { CORRECT, WRONG, fakeClock, fixtureBank, passage, seededRandom } from './test-bank';
 import type { Exam, OptionNumber } from '@/bank/types';
 
 function saved(questionId: string, correct: boolean, answeredAt = 0): Response {
@@ -229,5 +229,60 @@ describe('progress', () => {
     await engine.respond(WRONG);
 
     expect(engine.progress('quantitative')).toEqual({ total: 2, seen: 1, percentCorrect: 0, mistakes: 1 });
+  });
+});
+
+describe('Question Sets', () => {
+  test('a Passage and all its Questions are served as one block, in printed order', async () => {
+    const { engine } = await engineFor(fixtureBank({ verbal: ['v1', passage('p1', ['v2', 'v3', 'v4'])] }));
+    engine.start('verbal');
+
+    const served = (await answerServed(engine, 8)).join(' ');
+
+    expect(['v1 v2 v3 v4 v1 v2 v3 v4', 'v2 v3 v4 v1 v2 v3 v4 v1']).toContain(served);
+  });
+
+  test('each Question in a Set comes with its Passage', async () => {
+    const { engine } = await engineFor(fixtureBank({ verbal: [passage('p1', ['v1', 'v2'])] }));
+    engine.start('verbal');
+    const first = engine.current().questionSet?.id;
+    await engine.respond(CORRECT);
+    engine.next();
+
+    expect([first, engine.current().questionSet?.id]).toEqual(['p1', 'p1']);
+  });
+
+  test('a standalone Question comes without a Question Set', async () => {
+    const { engine } = await engineFor(fixtureBank({ verbal: ['v1'] }));
+    engine.start('verbal');
+
+    expect(engine.current().questionSet).toBeUndefined();
+  });
+
+  test('a partly answered Set counts as Unseen and is served whole', async () => {
+    const { engine } = await engineFor(fixtureBank({ verbal: ['v1', passage('p1', ['v2', 'v3', 'v4'])] }), {
+      responses: [saved('v1', true), saved('v2', true), saved('v3', false)],
+    });
+    engine.start('verbal');
+
+    expect(await answerServed(engine, 3)).toEqual(['v2', 'v3', 'v4']);
+  });
+
+  test('a Set holding a Mistake is served before Sets and Questions that have none', async () => {
+    const { engine } = await engineFor(fixtureBank({ verbal: ['v1', passage('p1', ['v2', 'v3']), 'v4'] }), {
+      responses: [saved('v1', true), saved('v2', true), saved('v3', false), saved('v4', true)],
+    });
+    engine.start('verbal');
+
+    expect(engine.current().question.id).toBe('v2');
+  });
+
+  test('skipping a Question in a Set moves to the next Question of the Set', async () => {
+    const { engine, store } = await engineFor(fixtureBank({ verbal: [passage('p1', ['v1', 'v2', 'v3'])] }));
+    engine.start('verbal');
+    engine.skip();
+
+    expect(engine.current().question.id).toBe('v2');
+    expect(await store.readAll()).toEqual([]);
   });
 });
