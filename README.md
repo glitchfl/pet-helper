@@ -31,3 +31,36 @@ Each Exam is a folder under `bank/` with an `exam.json` and an `images/` folder.
 Rich text is Hebrew with math as inline LaTeX between `$` signs, e.g. `אם $x^2 = 9$ אז`. Write `\$` for a literal dollar sign.
 
 Only Exams on NITE's public-use approved list may be added (see [ADR 0001](docs/adr/0001-only-nite-public-use-approved-exams.md)). The `sample-summer-2026` Exam is hand-written sample content for development, not NITE material.
+
+## Installing and updating
+
+iPhone users open the app in Expo Go, so no paid Apple Developer account is involved. Android users install an APK built with EAS Build. Both get new Exams and fixes over the air from EAS Update on the `production` channel.
+
+The update runtime is pinned to the Expo SDK (`runtimeVersion.policy: sdkVersion`), because that is the only runtime Expo Go accepts. Upgrading the Expo SDK therefore needs a new APK.
+
+### One-time setup
+
+```sh
+npx eas-cli@latest login
+npx eas-cli@latest init               # creates the Expo project and writes its id into app.json
+npx eas-cli@latest update:configure   # writes updates.url into app.json
+```
+
+Commit the `app.json` changes these make.
+
+### Building the Android APK
+
+```sh
+npx eas-cli@latest build -p android --profile apk
+```
+
+When the build finishes, open its page on expo.dev on the Android phone and install the APK. Android asks once to allow installs from that source.
+
+### Publishing an update
+
+```sh
+npx eas-cli@latest update --channel production --environment production --message "added Summer 2025"
+```
+
+- **Android APK:** the app downloads the update the next time it launches and switches to it on the launch after that.
+- **iPhone (Expo Go):** open the update in Expo Go by scanning the QR code from the update's page on expo.dev, or from `https://qr.expo.dev/eas-update?projectId=<project id>&runtimeVersion=exposdk:58.0.0&channel=production`.
