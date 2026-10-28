@@ -22,7 +22,7 @@ The commands are listed in `.venv/bin/python scripts/extract/extract.py --help`.
    - Run `quant`, then `apply`.
    - Done when `apply` reports no leftover keys and no raw-draft Questions, and every image shows the whole drawing with no stray print in it.
 6. **Checks.** Done when `npm test` and `npm run typecheck` are green. The Bank Check runs over the real bank, so it catches counts, Topics, broken LaTeX and missing images.
-7. **Proof Sheet.** Run `proof`. Name the path `proof/<exam-id>/index.html` in your final message. Its crops of NITE pages stay out of git.
+7. **Proof Sheet.** Run `proof`. Commit it with the Exam and name the path `proof/<exam-id>/index.html` in your final message.
 8. **Commit.** Commit once per Exam, with a message like `added the summer 2025 exam`.
 9. **Update.** An over-the-air update reaches every learner. Once the batch is committed, ask the owner with AskUserQuestion, then run README > Publishing an update.
 10. **Ticket.** Tick the criteria in the Exam's ticket and add a line under `## Comments`.

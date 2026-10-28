@@ -36,7 +36,7 @@ The bank holds the Autumn 2026 Exam.
 
 ### Extracting an Exam
 
-The scripts in `scripts/extract` read an Exam PDF with PyMuPDF. The PDFs and the Proof Sheets stay out of the repo.
+The scripts in `scripts/extract` read an Exam PDF with PyMuPDF. The PDFs stay out of the repo. The Proof Sheets are committed under `proof/`.
 
 ```sh
 python3 -m venv .venv && .venv/bin/pip install -r scripts/extract/requirements.txt

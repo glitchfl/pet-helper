@@ -44,5 +44,5 @@ yarn-error.*
 .venv/
 __pycache__/
 
-# proof sheets and page renders - they hold NITE crops, kept out of the public repo
-proof/
+# the specs and tickets live in the repo even though a global ignore hides .scratch
+!.scratch/
