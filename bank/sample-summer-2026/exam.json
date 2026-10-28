@@ -3,6 +3,7 @@
   "season": "summer",
   "year": 2026,
   "sample": true,
+  "formulaSheet": "images/formula-sheet.png",
   "sections": [
     {
       "number": 1,
@@ -272,6 +273,139 @@
             }
           ],
           "correctOption": 4
+        },
+        {
+          "id": "sample-summer-2026-s2-q4",
+          "number": 4,
+          "questionType": "שאלות ובעיות",
+          "topic": "אלגברה",
+          "stem": "אם $x^2 = 49$ ו-$x < 0$, מהו הערך של $\\frac{x+1}{2}$?",
+          "options": [
+            {
+              "text": "$-4$"
+            },
+            {
+              "text": "$-3$"
+            },
+            {
+              "text": "$3$"
+            },
+            {
+              "text": "$4$"
+            }
+          ],
+          "correctOption": 2
+        },
+        {
+          "id": "sample-summer-2026-s2-q5",
+          "number": 5,
+          "questionType": "שאלות ובעיות",
+          "topic": "שורשים וחזקות",
+          "stem": "מהו הערך של $\\sqrt{18} \\cdot \\sqrt{2}$?",
+          "options": [
+            {
+              "text": "$6$"
+            },
+            {
+              "text": "$\\sqrt{20}$"
+            },
+            {
+              "text": "$9$"
+            },
+            {
+              "text": "$36$"
+            }
+          ],
+          "correctOption": 1
+        },
+        {
+          "id": "sample-summer-2026-s2-q6",
+          "number": 6,
+          "questionType": "שאלות ובעיות",
+          "topic": "גאומטריה",
+          "stem": "שטחו של עיגול הוא $16\\pi$ סמ\"ר. מהו היקפו (בס\"מ)?",
+          "options": [
+            {
+              "text": "$4\\pi$"
+            },
+            {
+              "text": "$8\\pi$"
+            },
+            {
+              "text": "$16\\pi$"
+            },
+            {
+              "text": "$32\\pi$"
+            }
+          ],
+          "correctOption": 2
+        },
+        {
+          "id": "sample-summer-2026-s2-q7",
+          "number": 7,
+          "questionType": "שאלות ובעיות",
+          "topic": "גאומטריה",
+          "stem": "במשולש ישר-הזווית $ABC$ שבסרטוט, מהו אורך היתר $AC$ (בס\"מ)?",
+          "options": [
+            {
+              "text": "$10$"
+            },
+            {
+              "text": "$12$"
+            },
+            {
+              "text": "$2\\sqrt{7}$"
+            },
+            {
+              "text": "$14$"
+            }
+          ],
+          "correctOption": 1,
+          "figure": "images/s2-q7-figure.png"
+        },
+        {
+          "id": "sample-summer-2026-s2-q8",
+          "number": 8,
+          "questionType": "שאלות ובעיות",
+          "topic": "פונקציות",
+          "stem": "איזה מהגרפים הבאים מתאר את הפונקציה $f(x) = x^2 - 1$?",
+          "options": [
+            {
+              "image": "images/s2-q8-option1.png"
+            },
+            {
+              "image": "images/s2-q8-option2.png"
+            },
+            {
+              "image": "images/s2-q8-option3.png"
+            },
+            {
+              "image": "images/s2-q8-option4.png"
+            }
+          ],
+          "correctOption": 3
+        },
+        {
+          "id": "sample-summer-2026-s2-q9",
+          "number": 9,
+          "questionType": "שאלות ובעיות",
+          "topic": "שורשים וחזקות",
+          "stem": "מהו הערך של $\\frac{2^{10}}{2^{7}}$?",
+          "options": [
+            {
+              "text": "$3$"
+            },
+            {
+              "text": "$8$"
+            },
+            {
+              "text": "$2^{17}$"
+            },
+            {
+              "text": "$\\frac{10}{7}$"
+            }
+          ],
+          "correctOption": 2
         }
       ]
     }

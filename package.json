@@ -35,7 +35,8 @@
     "web": "expo start --web",
     "test": "jest",
     "test:watch": "jest --watch",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:katex-css": "node scripts/build-katex-css.mjs"
   },
   "private": true,
   "jest": {

@@ -1,4 +1,3 @@
-import type { ImageSourcePropType } from 'react-native';
 import type { Exam, ImagePath, QuestionBank } from './types';
 
 const examFiles = require.context('../../bank', true, /\/exam\.json$/);
@@ -12,6 +11,6 @@ export const questionBank: QuestionBank = examFiles.keys().map((key) => {
   return exam;
 });
 
-export function imageSource(examId: string, path: ImagePath): ImageSourcePropType {
+export function imageSource(examId: string, path: ImagePath): number {
   return imageFiles(`${folderOfExam.get(examId)}/${path}`);
 }

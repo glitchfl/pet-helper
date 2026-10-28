@@ -1,4 +1,4 @@
-import { Stack, Unmatched, useLocalSearchParams } from 'expo-router';
+import { Link, Stack, Unmatched, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -25,6 +25,8 @@ function PracticeScreen({ domain }: { domain: Domain }) {
   const [feedback, setFeedback] = useState<Feedback>();
   const [tab, setTab] = useState<SetTab>('question');
   const locked = useRef(false);
+
+  const formulaSheetExam = domain === 'quantitative' && served?.exam.formulaSheet ? served.exam.id : undefined;
 
   function show(next: CurrentQuestion) {
     setServed(next);
@@ -59,7 +61,20 @@ function PracticeScreen({ domain }: { domain: Domain }) {
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      <Stack.Screen options={{ title: DOMAIN_NAMES[domain] }} />
+      <Stack.Screen
+        options={{
+          title: DOMAIN_NAMES[domain],
+          headerRight: formulaSheetExam
+            ? () => (
+                <Link href={{ pathname: '/formula-sheet', params: { exam: formulaSheetExam } }} asChild>
+                  <Pressable accessibilityRole="button" hitSlop={10}>
+                    <Text style={[styles.headerButton, { color: colors.accent }]}>דף נוסחאות</Text>
+                  </Pressable>
+                </Link>
+              )
+            : undefined,
+        }}
+      />
       {served?.questionSet && (
         <>
           <SetTabs
@@ -85,7 +100,13 @@ function PracticeScreen({ domain }: { domain: Domain }) {
           style={tab !== 'question' && styles.hidden}
           contentContainerStyle={styles.content}
         >
-          <QuestionCard question={served.question} chosen={chosen} feedback={feedback} onRespond={respond} />
+          <QuestionCard
+            examId={served.exam.id}
+            question={served.question}
+            chosen={chosen}
+            feedback={feedback}
+            onRespond={respond}
+          />
         </ScrollView>
       )}
 
@@ -131,6 +152,7 @@ function PracticeScreen({ domain }: { domain: Domain }) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
+  headerButton: { fontSize: 16, fontWeight: '600' },
   content: { padding: 16, paddingBottom: 32 },
   hidden: { display: 'none' },
   setCard: { borderWidth: 1, borderRadius: 16, padding: 18 },
