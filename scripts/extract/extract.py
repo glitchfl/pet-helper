@@ -199,7 +199,11 @@ def apply_retyped(exam_id: str, path: Path) -> None:
             if 'options' in entry:
                 if len(entry['options']) != 4:
                     raise SystemExit(f'{question["id"]}: retyped {len(entry["options"])} Options instead of 4')
-                question['options'] = [{'text': text} for text in entry['options']]
+                # null keeps the Option quant drafted - an image Option among text ones
+                question['options'] = [
+                    option if text is None else {'text': text}
+                    for option, text in zip(question['options'], entry['options'])
+                ]
     for question_set in exam['questionSets']:
         key = question_set['id'].removeprefix(f'{exam_id}-s')
         if question_set['kind'] == 'chart' and key in retyped:

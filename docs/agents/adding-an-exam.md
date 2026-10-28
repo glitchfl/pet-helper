@@ -31,7 +31,7 @@ The commands are listed in `.venv/bin/python scripts/extract/extract.py --help`.
 
 A JSON object read by `apply`, built from the rendered page (the text layer garbles math):
 
-- `"<section>-<question>"` maps to `{"topic", "stem", "options"}`, where `options` holds four rich texts. For a Question whose Options are images, omit `options`. `quant` already points those Options at their crops.
+- `"<section>-<question>"` maps to `{"topic", "stem", "options"}`, where `options` holds four rich texts. For a Question whose Options are images, omit `options`. `quant` already points those Options at their crops. When only some Options are images, put `null` in their places.
 - `"<section>-chart<i>"` maps to the Chart's intro: NITE's paragraph that explains the Chart, ending with its "שימו לב" line.
 
 ### Rich text
