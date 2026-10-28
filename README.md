@@ -32,7 +32,7 @@ Rich text is Hebrew with math as inline LaTeX between `$` signs, e.g. `אם $x^2
 
 Only Exams on NITE's public-use approved list may be added (see [ADR 0001](docs/adr/0001-only-nite-public-use-approved-exams.md)).
 
-The bank holds the Autumn 2026 Exam.
+The bank holds the Winter 2025 and Autumn 2026 Exams.
 
 ### Extracting an Exam
 

@@ -136,7 +136,9 @@ def page_lines(
     for rect in _blanks(page):
         for line in lines:
             if line.baseline - 2 <= rect.y0 <= line.baseline + 4 and line.x0 - 40 < rect.x0 and rect.x1 < line.x1 + 40:
-                line.glyphs.append(Glyph(BLANK, rect.x0, rect.x1, line.baseline - line.size, line.baseline, line.size, False, False))
+                # a stroke through printed glyphs is hidden artwork from another edition - a blank fills a gap
+                if not any(glyph.x0 < rect.x1 - 1 and rect.x0 + 1 < glyph.x1 for glyph in line.glyphs):
+                    line.glyphs.append(Glyph(BLANK, rect.x0, rect.x1, line.baseline - line.size, line.baseline, line.size, False, False))
                 break
     return lines
 

@@ -14,8 +14,10 @@ LINE_MARKER = re.compile(r'^\((\d+)\)(?:\s|$)')
 SECTION_HEADER = re.compile(r'חשיבה (מילולית|כמותית) - פרק (ראשון|שני)')
 STATED_COUNT = re.compile(r'בפרק זה (\d+) שאלות')
 DOMAINS = {'מילולית': 'verbal', 'כמותית': 'quantitative'}
-SET_KINDS = {'קטע קריאה': 'passage', 'הסקה מתרשים': 'chart'}
+SET_KINDS = {'קטע קריאה': 'passage', 'הסקה מתרשים': 'chart', 'הסקה מטבלה': 'chart'}
 SET_QUESTIONS_HEADING = 'השאלות'
+# some Exams split the reading into two short Passages, קטע א and קטע ב, under one קטעי קריאה heading
+PASSAGE_PART = re.compile(r'^קטע [א-ת]$')
 
 # question numbers and passage line markers share the right margin - option markers sit further in
 MARGIN_X = 505
@@ -172,6 +174,8 @@ def _parse_section(doc: pymupdf.Document, section: Section) -> None:
                 if name == SET_QUESTIONS_HEADING:
                     set_questions = True
                     continue
+                if PASSAGE_PART.match(name):
+                    name = 'קטע קריאה'
                 question_type, set_questions, open_set = name, False, None
                 if name in SET_KINDS:
                     open_set = QuestionSet(SET_KINDS[name], page_index, line.y0)
