@@ -1,10 +1,14 @@
-import { createPracticeEngine } from './practice-engine';
-import { createMemoryResponseStore } from './response-store';
+import { createPracticeEngine, type PracticeEngine } from './practice-engine';
+import { createMemoryResponseStore, type Response } from './response-store';
 import { CORRECT, WRONG, fakeClock, fixtureBank, seededRandom } from './test-bank';
-import type { Exam } from '@/bank/types';
+import type { Exam, OptionNumber } from '@/bank/types';
 
-async function engineFor(bank: Exam[], options: { random?: () => number } = {}) {
-  const store = createMemoryResponseStore();
+function saved(questionId: string, correct: boolean, answeredAt = 0): Response {
+  return { questionId, option: correct ? CORRECT : WRONG, correct, answeredAt, durationMs: 1_000 };
+}
+
+async function engineFor(bank: Exam[], options: { random?: () => number; responses?: Response[] } = {}) {
+  const store = createMemoryResponseStore(options.responses);
   const clock = fakeClock();
   const engine = await createPracticeEngine({
     bank,
@@ -13,6 +17,16 @@ async function engineFor(bank: Exam[], options: { random?: () => number } = {}) 
     random: options.random ?? seededRandom(1),
   });
   return { engine, store, clock };
+}
+
+async function answerServed(engine: PracticeEngine, count: number, option: OptionNumber = CORRECT) {
+  const ids: string[] = [];
+  for (let i = 0; i < count; i++) {
+    if (i > 0) engine.next();
+    ids.push(engine.current().question.id);
+    await engine.respond(option);
+  }
+  return ids;
 }
 
 describe('responding', () => {
@@ -36,6 +50,24 @@ describe('responding', () => {
     await engine.respond(WRONG);
 
     await expect(engine.respond(CORRECT)).rejects.toThrow();
+  });
+
+  test('a Response records the Option, its correctness, when it was answered and how long it took', async () => {
+    const { engine, store, clock } = await engineFor(fixtureBank({ verbal: ['v1', 'v2'] }));
+    engine.start('verbal');
+    const first = engine.current().question.id;
+    clock.advance(4_000);
+    await engine.respond(WRONG);
+    clock.advance(30_000);
+    engine.next();
+    const second = engine.current().question.id;
+    clock.advance(12_500);
+    await engine.respond(CORRECT);
+
+    expect(await store.readAll()).toEqual([
+      { questionId: first, option: WRONG, correct: false, answeredAt: 1_004_000, durationMs: 4_000 },
+      { questionId: second, option: CORRECT, correct: true, answeredAt: 1_046_500, durationMs: 12_500 },
+    ]);
   });
 });
 
@@ -62,6 +94,102 @@ describe('serving', () => {
     engine.next();
 
     expect(engine.current().question.id).not.toBe(first);
+  });
+
+  test('Unseen Questions are served first, even when practice is reopened', async () => {
+    const { engine } = await engineFor(fixtureBank({ verbal: ['v1', 'v2', 'v3', 'v4'] }), {
+      responses: [saved('v1', true), saved('v2', false)],
+    });
+    engine.start('verbal');
+
+    expect(await answerServed(engine, 2)).toEqual(expect.arrayContaining(['v3', 'v4']));
+  });
+
+  test('Mistakes are served once nothing is Unseen, before the rest', async () => {
+    const { engine } = await engineFor(fixtureBank({ verbal: ['v1', 'v2', 'v3', 'v4'] }), {
+      responses: [saved('v1', true), saved('v2', false), saved('v3', true), saved('v4', false)],
+    });
+    engine.start('verbal');
+
+    expect(await answerServed(engine, 2)).toEqual(expect.arrayContaining(['v2', 'v4']));
+  });
+
+  test('only the most recent Response decides whether a Question is a Mistake', async () => {
+    const { engine } = await engineFor(fixtureBank({ verbal: ['v1', 'v2', 'v3'] }), {
+      responses: [saved('v1', false, 1), saved('v2', true, 2), saved('v3', true, 3), saved('v1', true, 4), saved('v3', false, 5)],
+    });
+    engine.start('verbal');
+
+    expect(engine.current().question.id).toBe('v3');
+  });
+
+  test('a Mistake answered correctly stops being served before the rest', async () => {
+    const bank = fixtureBank({ verbal: ['v1', 'v2', 'v3'] });
+    const first = await engineFor(bank, {
+      random: () => 0,
+      responses: [saved('v1', false), saved('v2', false), saved('v3', true)],
+    });
+    first.engine.start('verbal');
+    const cleared = first.engine.current().question.id;
+    await first.engine.respond(CORRECT);
+
+    const reopened = await createPracticeEngine({
+      bank,
+      store: first.store,
+      clock: fakeClock().now,
+      random: () => 0,
+    });
+    reopened.start('verbal');
+
+    expect(reopened.current().question.id).not.toBe(cleared);
+  });
+
+  test('practice keeps going after every Question is answered correctly', async () => {
+    const { engine } = await engineFor(fixtureBank({ verbal: ['v1', 'v2'] }), {
+      responses: [saved('v1', true), saved('v2', true)],
+    });
+    engine.start('verbal');
+
+    expect(await answerServed(engine, 6)).toHaveLength(6);
+  });
+
+  test('the same Question is never served twice in a row while others exist', async () => {
+    const { engine } = await engineFor(fixtureBank({ verbal: ['v1', 'v2', 'v3'] }));
+    engine.start('verbal');
+
+    const served = await answerServed(engine, 30);
+
+    expect(served.some((id, i) => id === served[i - 1])).toBe(false);
+  });
+
+  test('the only Question in a Domain is served again', async () => {
+    const { engine } = await engineFor(fixtureBank({ verbal: ['v1'] }));
+    engine.start('verbal');
+
+    expect(await answerServed(engine, 3)).toEqual(['v1', 'v1', 'v1']);
+  });
+
+  test('the order within a tier comes from the injected randomness', async () => {
+    const bank = fixtureBank({ verbal: ['v1', 'v2', 'v3', 'v4', 'v5'] });
+    const low = await engineFor(bank, { random: () => 0 });
+    const high = await engineFor(bank, { random: () => 0.999 });
+    low.engine.start('verbal');
+    high.engine.start('verbal');
+
+    expect(low.engine.current().question.id).not.toBe(high.engine.current().question.id);
+  });
+
+  test('a skipped Question records nothing and stays Unseen', async () => {
+    const { engine, store } = await engineFor(fixtureBank({ verbal: ['v1', 'v2', 'v3'] }), {
+      responses: [saved('v1', true), saved('v2', true)],
+    });
+    engine.start('verbal');
+    engine.skip();
+    await engine.respond(CORRECT);
+    engine.next();
+
+    expect(engine.current().question.id).toBe('v3');
+    expect((await store.readAll()).filter((response) => response.questionId === 'v3')).toEqual([]);
   });
 
   test('Next waits for a Response', async () => {

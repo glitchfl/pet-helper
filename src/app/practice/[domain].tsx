@@ -1,5 +1,5 @@
 import { Stack, Unmatched, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Domain, OptionNumber } from '@/bank/types';
@@ -21,6 +21,7 @@ function PracticeScreen({ domain }: { domain: Domain }) {
   const [served, setServed] = useState<CurrentQuestion>();
   const [chosen, setChosen] = useState<OptionNumber>();
   const [feedback, setFeedback] = useState<Feedback>();
+  const locked = useRef(false);
 
   useEffect(() => {
     engine.start(domain);
@@ -28,12 +29,21 @@ function PracticeScreen({ domain }: { domain: Domain }) {
   }, [engine, domain]);
 
   async function respond(option: OptionNumber) {
+    if (locked.current) return;
+    locked.current = true;
     setChosen(option);
-    setFeedback(await engine.respond(option));
+    try {
+      setFeedback(await engine.respond(option));
+    } catch (error) {
+      locked.current = false;
+      setChosen(undefined);
+      throw error;
+    }
   }
 
-  function next() {
-    engine.next();
+  function move(action: () => void) {
+    action();
+    locked.current = false;
     setServed(engine.current());
     setChosen(undefined);
     setFeedback(undefined);
@@ -55,7 +65,7 @@ function PracticeScreen({ domain }: { domain: Domain }) {
               {feedback.correct ? 'נכון!' : `לא נכון. התשובה הנכונה היא (${feedback.correctOption})`}
             </Text>
             <Pressable
-              onPress={next}
+              onPress={() => move(engine.next)}
               accessibilityRole="button"
               style={({ pressed }) => [styles.next, { backgroundColor: colors.accent, opacity: pressed ? 0.8 : 1 }]}
             >
@@ -63,7 +73,17 @@ function PracticeScreen({ domain }: { domain: Domain }) {
             </Pressable>
           </>
         ) : (
-          <Text style={[styles.hint, { color: colors.muted }]}>בחרו תשובה</Text>
+          <View style={styles.row}>
+            <Text style={[styles.hint, { color: colors.muted }]}>בחרו תשובה</Text>
+            <Pressable
+              onPress={() => move(engine.skip)}
+              accessibilityRole="button"
+              hitSlop={8}
+              style={({ pressed }) => [styles.skip, { borderColor: colors.border, opacity: pressed ? 0.6 : 1 }]}
+            >
+              <Text style={[styles.skipLabel, { color: colors.text }]}>דלג</Text>
+            </Pressable>
+          </View>
         )}
       </View>
     </View>
@@ -75,7 +95,10 @@ const styles = StyleSheet.create({
   content: { padding: 16, paddingBottom: 32 },
   bar: { borderTopWidth: StyleSheet.hairlineWidth, paddingHorizontal: 16, paddingTop: 12, gap: 10 },
   verdict: { fontSize: 17, fontWeight: '600' },
+  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   hint: { fontSize: 15, paddingVertical: 14 },
+  skip: { borderWidth: 1, borderRadius: 10, paddingVertical: 10, paddingHorizontal: 22 },
+  skipLabel: { fontSize: 16, fontWeight: '600' },
   next: { borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
   nextLabel: { fontSize: 18, fontWeight: '700' },
 });

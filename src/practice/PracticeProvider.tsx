@@ -2,8 +2,8 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { ActivityIndicator, View } from 'react-native';
 import { questionBank } from '@/bank';
 import { createPracticeEngine, type PracticeEngine } from '@/engine/practice-engine';
-import { createMemoryResponseStore } from '@/engine/response-store';
 import { useColors } from '@/ui/theme';
+import { openSqliteResponseStore } from './sqlite-response-store';
 
 const PracticeContext = createContext<PracticeEngine | null>(null);
 
@@ -12,12 +12,9 @@ export function PracticeProvider({ children }: { children: ReactNode }) {
   const [engine, setEngine] = useState<PracticeEngine>();
 
   useEffect(() => {
-    createPracticeEngine({
-      bank: questionBank,
-      store: createMemoryResponseStore(),
-      clock: Date.now,
-      random: Math.random,
-    }).then(setEngine);
+    openSqliteResponseStore()
+      .then((store) => createPracticeEngine({ bank: questionBank, store, clock: Date.now, random: Math.random }))
+      .then(setEngine);
   }, []);
 
   if (!engine) {
