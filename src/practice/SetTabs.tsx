@@ -18,7 +18,7 @@ export function SetTabs({ tab, setLabel, questionLabel, onChange }: Props) {
   ];
 
   return (
-    <View style={[styles.tabs, { backgroundColor: colors.card, borderColor: colors.border }]}>
+    <View style={[styles.tabs, { backgroundColor: colors.surface, borderColor: colors.border }]}>
       {tabs.map(({ key, label }) => {
         const active = key === tab;
         return (

@@ -10,7 +10,7 @@ export function PassageText({ passage }: { passage: PassageSet }) {
   for (const marker of markers) {
     pieces.push(passage.text.slice(cursor, marker.offset));
     pieces.push(
-      <Text key={marker.line} style={[styles.marker, { color: colors.muted }]}>
+      <Text key={marker.line} style={[styles.marker, { color: colors.textSecondary }]}>
         {` ${marker.line} `}
       </Text>,
     );

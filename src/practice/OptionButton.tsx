@@ -20,11 +20,11 @@ export function OptionButton({ examId, number, option, chosen, feedback, onPress
   const isWrongChoice = feedback !== undefined && chosen === number && !isCorrect;
 
   const tone = isCorrect
-    ? { backgroundColor: colors.correctBg, borderColor: colors.correct }
+    ? { backgroundColor: colors.correctSoft, borderColor: colors.correct }
     : isWrongChoice
-      ? { backgroundColor: colors.wrongBg, borderColor: colors.wrong }
+      ? { backgroundColor: colors.wrongSoft, borderColor: colors.wrong }
       : { backgroundColor: 'transparent', borderColor: colors.border };
-  const markColor = isCorrect ? colors.correct : isWrongChoice ? colors.wrong : colors.muted;
+  const markColor = isCorrect ? colors.correct : isWrongChoice ? colors.wrong : colors.textSecondary;
 
   return (
     <Pressable

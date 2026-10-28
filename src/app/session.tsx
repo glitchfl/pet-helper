@@ -88,7 +88,7 @@ function PracticeScreen({ domain }: { domain: Domain }) {
         <>
           <SetTabs tab={tab} setLabel="קטע הקריאה" questionLabel={setPosition} onChange={setTab} />
           <ScrollView key={questionSet.id} style={tab !== 'set' && styles.hidden} contentContainerStyle={styles.content}>
-            <View style={[styles.setCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={[styles.setCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <Watermark />
               <PassageText passage={questionSet} />
               <CopyrightLine />
@@ -106,7 +106,7 @@ function PracticeScreen({ domain }: { domain: Domain }) {
             <View style={styles.chart}>
               {questionSet.intro && <RichText value={questionSet.intro} color={colors.text} fontSize={15} lineHeight={23} />}
               <BankImage examId={served.exam.id} path={questionSet.image} />
-              <Text style={[styles.setPosition, { color: colors.muted }]}>{setPosition} על התרשים</Text>
+              <Text style={[styles.setPosition, { color: colors.textSecondary }]}>{setPosition} על התרשים</Text>
             </View>
           )}
           <QuestionCard
@@ -145,7 +145,7 @@ function PracticeScreen({ domain }: { domain: Domain }) {
           </Pressable>
         ) : (
           <View style={styles.row}>
-            <Text style={[styles.hint, { color: colors.muted }]}>בחרו תשובה</Text>
+            <Text style={[styles.hint, { color: colors.textSecondary }]}>בחרו תשובה</Text>
             <Pressable
               onPress={() => move(engine.skip)}
               accessibilityRole="button"

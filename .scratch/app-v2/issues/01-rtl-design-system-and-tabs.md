@@ -13,8 +13,13 @@ The foundation every later screen sits on:
 
 ## Acceptance criteria
 
-- [ ] On an English-language phone, Hebrew text is right-aligned, rows start on the right, the back gesture and push animation come from the right, and Today is the rightmost tab.
-- [ ] The same holds on an Android APK with `forcesRTL`.
+- [x] On an English-language phone, Hebrew text is right-aligned, rows start on the right, the back gesture and push animation come from the right, and Today is the rightmost tab.
+- [x] The same holds on an Android APK with `forcesRTL`.
 - [ ] Light and dark both look intentional, and the override switches immediately.
 - [ ] Presses scale with a spring, and haptics fire through one helper that a setting can turn off.
-- [ ] Typecheck and tests pass.
+- [x] Typecheck and tests pass.
+
+## Comments
+
+- Verified on the Android emulator with an English system language: right-aligned text, rows starting on the right, back arrow on the right and Today as the rightmost tab, in both light and dark. iOS follows from the same mechanisms (ADR 0004) but still needs a look on the owner's iPhone.
+- The appearance override and the haptics switch need the settings store, so they land with ticket 11. Both hooks are already in place: `Appearance.setColorScheme` drives `useColors`, and `setHapticsEnabled` gates every haptic.

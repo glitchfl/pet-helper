@@ -21,10 +21,10 @@ export function QuestionCard({ examId, sample, question, chosen, feedback, onRes
   const colors = useColors();
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
       <Watermark />
       <View style={styles.header}>
-        <Text style={[styles.meta, { color: colors.muted }]}>
+        <Text style={[styles.meta, { color: colors.textSecondary }]}>
           שאלה {question.number} · {question.questionType}
           {sample && ' · שאלת דוגמה'}
         </Text>

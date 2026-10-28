@@ -22,7 +22,7 @@ export function Watermark() {
 
 export function CopyrightLine() {
   const colors = useColors();
-  return <Text style={[styles.copyright, { color: colors.muted }]}>{COPYRIGHT_LINE}</Text>;
+  return <Text style={[styles.copyright, { color: colors.textSecondary }]}>{COPYRIGHT_LINE}</Text>;
 }
 
 const styles = StyleSheet.create({
