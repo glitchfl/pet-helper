@@ -30,7 +30,24 @@ Each Exam is a folder under `bank/` with an `exam.json` and an `images/` folder.
 
 Rich text is Hebrew with math as inline LaTeX between `$` signs, e.g. `אם $x^2 = 9$ אז`. Write `\$` for a literal dollar sign.
 
-Only Exams on NITE's public-use approved list may be added (see [ADR 0001](docs/adr/0001-only-nite-public-use-approved-exams.md)). The `sample-summer-2026` Exam is hand-written sample content for development, not NITE material.
+Only Exams on NITE's public-use approved list may be added (see [ADR 0001](docs/adr/0001-only-nite-public-use-approved-exams.md)).
+
+The bank holds the Verbal Sections of Autumn 2026. The `sample-summer-2026` Exam is hand-written sample content for development, not NITE material, and stands in for the Quantitative Domain until the real one is extracted.
+
+### Extracting an Exam
+
+The scripts in `scripts/extract` read an Exam PDF with PyMuPDF. The PDFs and the Proof Sheets stay out of the repo.
+
+```sh
+python3 -m venv .venv && .venv/bin/pip install -r scripts/extract/requirements.txt
+.venv/bin/python scripts/extract/extract.py inspect exam.pdf                      # re-check Sections, Question counts, Answer Key
+.venv/bin/python scripts/extract/extract.py verbal exam.pdf --exam autumn-2026    # writes bank/autumn-2026/exam.json
+.venv/bin/python scripts/extract/extract.py proof exam.pdf --exam autumn-2026     # proof/autumn-2026/index.html
+```
+
+`verbal` rebuilds the text from glyph positions, which fixes the flipped brackets and moved punctuation of the PDF's text layer. It also puts back the fill-in blanks as `____`. Vowel marks still need a look against the page, because the PDF orders them inconsistently. `verbal` refuses to overwrite Sections that already exist, since they may hold fixes made by hand.
+
+Skim the Proof Sheet once per Exam before shipping it.
 
 ## Installing and updating
 

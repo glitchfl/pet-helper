@@ -39,3 +39,10 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# python venv and caches for scripts/extract
+.venv/
+__pycache__/
+
+# proof sheets and page renders - they hold NITE crops, kept out of the public repo
+proof/
