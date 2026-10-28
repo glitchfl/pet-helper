@@ -39,6 +39,15 @@
     },
     "runtimeVersion": {
       "policy": "sdkVersion"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "84ac06b1-1f0e-402f-a4c3-44a64155a2c9"
+      }
+    },
+    "owner": "glitchfl",
+    "updates": {
+      "url": "https://u.expo.dev/84ac06b1-1f0e-402f-a4c3-44a64155a2c9"
     }
   }
 }
