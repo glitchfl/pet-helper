@@ -2,7 +2,7 @@ import { checkBank } from './bank-check';
 import type { Exam, Question } from './types';
 import { chart, fixtureBank, passage } from '@/engine/test-bank';
 
-const imagesExist = { imageExists: () => true };
+const imagesExist = { imageExists: () => true, mathTypeset: () => true };
 
 function wellFormed() {
   return fixtureBank({
@@ -122,7 +122,7 @@ test('a referenced image that does not exist fails', () => {
   bank[0].formulaSheet = 'images/formula-sheet.png';
   const missing = new Set(['images/q1-option3.png', 'chart.png', 'images/formula-sheet.png']);
 
-  const problems = checkBank(bank, { imageExists: (_exam, path) => !missing.has(path) });
+  const problems = checkBank(bank, { ...imagesExist, imageExists: (_exam, path) => !missing.has(path) });
 
   expect(problems).toHaveLength(3);
   for (const path of missing) expect(problems.join('\n')).toContain(path);
@@ -144,21 +144,38 @@ test('a Question Set sharing an id with a Question fails', () => {
   expectOneProblemAbout(checkBank(bank, imagesExist), 'q1');
 });
 
-test('math that cannot be typeset fails', () => {
-  const bank = wellFormed();
-  question(bank, 'q2').stem = 'מהו $\\frac{1}{2$?';
-  question(bank, 'q3').options[0] = { text: 'בערך $3' };
+const typesetAllBut = (missing: string) => ({ ...imagesExist, mathTypeset: (_exam: Exam, latex: string) => latex !== missing });
 
-  const problems = checkBank(bank, imagesExist);
+test('math that was not typeset by build:math fails', () => {
+  const bank = wellFormed();
+  question(bank, 'q2').stem = 'מהו $\\frac{1}{2}$?';
+  question(bank, 'q3').options[0] = { text: '$\\frac{1}{2}$' };
+
+  const problems = checkBank(bank, typesetAllBut('\\frac{1}{2}'));
 
   expect(problems).toHaveLength(2);
   expect(problems[0]).toContain('q2');
   expect(problems[1]).toContain('q3');
 });
 
-test('a Chart intro with math that cannot be typeset fails', () => {
+test('an unclosed $ fails', () => {
   const bank = wellFormed();
-  Object.assign(questionSet(bank, 'c1'), { intro: 'בתרשים $\\frac{1}{2$ מהנתונים' });
+  question(bank, 'q3').options[0] = { text: 'בערך $3' };
 
-  expectOneProblemAbout(checkBank(bank, imagesExist), 'c1');
+  expectOneProblemAbout(checkBank(bank, imagesExist), 'q3');
+});
+
+test('a Chart intro with math that was not typeset fails', () => {
+  const bank = wellFormed();
+  Object.assign(questionSet(bank, 'c1'), { intro: 'בתרשים $x^2$ מהנתונים' });
+
+  expectOneProblemAbout(checkBank(bank, typesetAllBut('x^2')), 'c1');
+});
+
+test('hebrew inside math fails unless it is a fraction of phrases', () => {
+  const bank = wellFormed();
+  question(bank, 'q1').stem = '$\\text{שטח} + 1 = ?$';
+  question(bank, 'q2').stem = 'נתון: $\\frac{\\text{שטח הריבוע } ABCD}{\\text{היקף הריבוע}} = ?$';
+
+  expectOneProblemAbout(checkBank(bank, imagesExist), 'q1');
 });

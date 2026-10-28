@@ -1,24 +1,29 @@
-import katex from 'katex';
-import { parseRichText } from './rich-text';
+import { mathOf } from './rich-text';
 import type { Domain, Exam, ImagePath, RichText } from './types';
 
 const QUESTIONS_PER_SECTION: Record<Domain, number> = { verbal: 23, quantitative: 20 };
+const HEBREW = /\p{Script=Hebrew}/u;
 
 type Options = {
   imageExists: (exam: Exam, path: ImagePath) => boolean;
+  // whether scripts/build-math.mjs has typeset this latex for the exam
+  mathTypeset: (exam: Exam, latex: string) => boolean;
 };
 
-function mathProblem(value: RichText): string | undefined {
+function mathProblem(exam: Exam, value: RichText, mathTypeset: Options['mathTypeset']): string | undefined {
+  let latexes: string[];
   try {
-    for (const segment of parseRichText(value)) {
-      if (segment.kind === 'math') katex.renderToString(segment.latex, { throwOnError: true });
-    }
+    latexes = mathOf(value);
   } catch (error) {
     return error instanceof Error ? error.message : String(error);
   }
+  for (const latex of latexes) {
+    if (HEBREW.test(latex)) return `"${latex}" has hebrew inside math, which only a top-level \\frac of \\text phrases may have`;
+    if (!mathTypeset(exam, latex)) return `"${latex}" is not typeset - run npm run build:math`;
+  }
 }
 
-export function checkBank(bank: Exam[], { imageExists }: Options): string[] {
+export function checkBank(bank: Exam[], { imageExists, mathTypeset }: Options): string[] {
   const problems: string[] = [];
   const seenIds = new Set<string>();
 
@@ -33,8 +38,8 @@ export function checkBank(bank: Exam[], { imageExists }: Options): string[] {
       if (!imageExists(exam, path)) problems.push(`${owner}: image ${path} does not exist`);
     };
     const math = (owner: string, value: RichText) => {
-      const error = mathProblem(value);
-      if (error) problems.push(`${owner}: has math that cannot be typeset - ${error}`);
+      const error = mathProblem(exam, value, mathTypeset);
+      if (error) problems.push(`${owner}: has math that cannot be shown - ${error}`);
     };
     if (exam.formulaSheet) image(exam.id, exam.formulaSheet);
 
