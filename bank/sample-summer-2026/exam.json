@@ -1,0 +1,128 @@
+{
+  "id": "sample-summer-2026",
+  "season": "summer",
+  "year": 2026,
+  "sample": true,
+  "sections": [
+    {
+      "number": 1,
+      "domain": "verbal",
+      "questions": [
+        {
+          "id": "sample-summer-2026-s1-q1",
+          "number": 1,
+          "questionType": "אנלוגיות",
+          "stem": "מצאו את הזוג שהיחס בין מילותיו דומה ביותר ליחס שבין המילים: מפתח : מנעול",
+          "options": [
+            { "text": "עט : דף" },
+            { "text": "משוט : סירה" },
+            { "text": "קוד : כספת" },
+            { "text": "כפתור : חולצה" }
+          ],
+          "correctOption": 3
+        },
+        {
+          "id": "sample-summer-2026-s1-q2",
+          "number": 2,
+          "questionType": "אנלוגיות",
+          "stem": "מצאו את הזוג שהיחס בין מילותיו דומה ביותר ליחס שבין המילים: צמא : שתייה",
+          "options": [
+            { "text": "עייפות : שינה" },
+            { "text": "קור : שלג" },
+            { "text": "כאב : פצע" },
+            { "text": "שמחה : צחוק" }
+          ],
+          "correctOption": 1
+        },
+        {
+          "id": "sample-summer-2026-s1-q3",
+          "number": 3,
+          "questionType": "השלמת משפטים",
+          "stem": "למרות שהניסוי נכשל פעמים רבות, החוקרת לא ________ והמשיכה לשפר את השיטה.",
+          "options": [
+            { "text": "התייאשה" },
+            { "text": "התעניינה" },
+            { "text": "הצליחה" },
+            { "text": "התבלבלה" }
+          ],
+          "correctOption": 1
+        },
+        {
+          "id": "sample-summer-2026-s1-q4",
+          "number": 4,
+          "questionType": "השלמת משפטים",
+          "stem": "הוויכוח בין השכנים היה כה ________, שאיש מהם לא הסכים לוותר אפילו על פרט קטן.",
+          "options": [
+            { "text": "מתון" },
+            { "text": "עיקש" },
+            { "text": "קצר" },
+            { "text": "משעשע" }
+          ],
+          "correctOption": 2
+        },
+        {
+          "id": "sample-summer-2026-s1-q5",
+          "number": 5,
+          "questionType": "הבנה והסקה",
+          "stem": "כל מי שמתאמן בבוקר שותה קפה. דנה אינה שותה קפה. איזה מהמשפטים הבאים נכון בהכרח?",
+          "options": [
+            { "text": "דנה מתאמנת בערב." },
+            { "text": "דנה אינה מתאמנת בבוקר." },
+            { "text": "דנה אינה מתאמנת כלל." },
+            { "text": "כל מי ששותה קפה מתאמן בבוקר." }
+          ],
+          "correctOption": 2
+        }
+      ]
+    },
+    {
+      "number": 2,
+      "domain": "quantitative",
+      "questions": [
+        {
+          "id": "sample-summer-2026-s2-q1",
+          "number": 1,
+          "questionType": "שאלות ובעיות",
+          "topic": "אחוזים",
+          "stem": "מחיר חולצה היה 80 שקלים, והוא הוזל ב-25%. מה מחיר החולצה לאחר ההוזלה?",
+          "options": [
+            { "text": "55 שקלים" },
+            { "text": "60 שקלים" },
+            { "text": "65 שקלים" },
+            { "text": "75 שקלים" }
+          ],
+          "correctOption": 2
+        },
+        {
+          "id": "sample-summer-2026-s2-q2",
+          "number": 2,
+          "questionType": "שאלות ובעיות",
+          "topic": "בעיות תנועה",
+          "stem": "רוכב אופניים נוסע במהירות קבועה של 15 קמ\"ש. כמה זמן ייקח לו לעבור 45 ק\"מ?",
+          "options": [
+            { "text": "שעתיים" },
+            { "text": "שעתיים וחצי" },
+            { "text": "3 שעות" },
+            { "text": "4 שעות" }
+          ],
+          "correctOption": 3
+        },
+        {
+          "id": "sample-summer-2026-s2-q3",
+          "number": 3,
+          "questionType": "שאלות ובעיות",
+          "topic": "ממוצעים",
+          "stem": "הממוצע של שלושה מספרים הוא 10. שניים מהם הם 8 ו-9. מהו המספר השלישי?",
+          "options": [
+            { "text": "10" },
+            { "text": "11" },
+            { "text": "12" },
+            { "text": "13" }
+          ],
+          "correctOption": 4
+        }
+      ]
+    }
+  ],
+  "questionSets": []
+}
