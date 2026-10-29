@@ -10,6 +10,8 @@ So the app forces the direction itself:
 
 Text alignment follows the Yoga direction on both platforms, so text is never given `textAlign: 'right'`, which would mean *end*. Fabric swaps `left` and `right` styles according to the *system* direction, so they mean different things on different phones. Layout therefore uses only `start` and `end`, and horizontal transforms multiply by the `FORWARD` sign in `src/ui/motion.ts`.
 
+A tab's scroll view is the one exception. RN mirrors a right-to-left scroll view and flips only its content back, but iOS 26 puts the large title inside the scroll view, where it came out mirrored. So `ScrollScreen` lays the scroll view out left-to-right and only its content right-to-left.
+
 Native controls that RN doesn't lay out, such as switches and date pickers, still follow the phone's own direction. That is accepted.
 
 Since ADR 0005 the app no longer runs in Expo Go, so `forcesRTL` takes effect as well. The forced layout stays, so the direction never depends on it.
