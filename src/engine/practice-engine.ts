@@ -1,7 +1,7 @@
 import type { Domain, Exam, OptionNumber, Question, QuestionBank, QuestionSet, Section } from '@/bank/types';
 import type { Response, ResponseStore } from './response-store';
 
-export type Feedback = { correct: boolean; correctOption: OptionNumber };
+export type Feedback = { correct: boolean; correctOption: OptionNumber; durationMs: number };
 
 export type CurrentQuestion = {
   exam: Exam;
@@ -13,6 +13,18 @@ export type CurrentQuestion = {
 // a Question Type, narrowed to one of its Topics when the type spans several
 export type Focus = { questionType: string; topic?: string };
 
+export type Mode = { kind: 'free' } | { kind: 'drill'; focus: Focus[] } | { kind: 'mistakes' };
+
+export type RecapItem = CurrentQuestion & {
+  outcome: 'correct' | 'wrong' | 'skipped';
+  option?: OptionNumber;
+  durationMs?: number;
+};
+
+export type Recap = { items: RecapItem[]; durationMs: number };
+
+export type RoundProgress = { done: number; total: number };
+
 export type Progress = {
   total: number;
   seen: number;
@@ -21,11 +33,16 @@ export type Progress = {
 };
 
 export type PracticeEngine = {
-  start(domain: Domain, focus?: Focus[]): void;
+  // false when the Mode has nothing to serve, like a Mistakes Review with no Mistakes
+  start(domain: Domain, mode?: Mode): boolean;
   current(): CurrentQuestion;
   respond(option: OptionNumber): Promise<Feedback>;
   skip(): void;
   next(): void;
+  round(): RoundProgress;
+  // only set once the last Question of the Round has been passed
+  recap(): Recap | undefined;
+  nextRound(): boolean;
   progress(domain: Domain, focus?: Focus[]): Progress;
   focuses(domain: Domain): Focus[];
 };
@@ -48,6 +65,9 @@ const UNSEEN = 0;
 const MISTAKE = 1;
 const REST = 2;
 
+const ROUND_TARGET = 10;
+const ROUND_CAP = 13;
+
 function inFocus(question: Question, focus: Focus[]) {
   return focus.some(
     ({ questionType, topic }) =>
@@ -55,7 +75,7 @@ function inFocus(question: Question, focus: Focus[]) {
   );
 }
 
-function unitsOf(bank: QuestionBank, domain: Domain, focus?: Focus[]): Unit[] {
+function unitsOf(bank: QuestionBank, domain: Domain, keep?: (question: Question) => boolean): Unit[] {
   const units: Unit[] = [];
   for (const exam of bank) {
     const sets = new Map(exam.questionSets.map((questionSet) => [questionSet.id, questionSet]));
@@ -78,11 +98,20 @@ function unitsOf(bank: QuestionBank, domain: Domain, focus?: Focus[]): Unit[] {
       }
     }
   }
-  if (!focus) return units;
+  if (!keep) return units;
   return units.flatMap((unit) => {
-    const questions = unit.questions.filter((question) => inFocus(question, focus));
+    const questions = unit.questions.filter(keep);
     return questions.length > 0 ? [{ ...unit, questions }] : [];
   });
+}
+
+// units are rebuilt every Round, so the one that closed the last Round is recognised by its key
+function keyOf(unit: Unit) {
+  return unit.questionSet?.id ?? unit.questions[0].id;
+}
+
+function sizeOf(units: Unit[]) {
+  return units.reduce((size, unit) => size + unit.questions.length, 0);
 }
 
 function biggestFirst<T>(counts: Map<T, number>, name: (key: T) => string): T[] {
@@ -110,17 +139,59 @@ export async function createPracticeEngine({ bank, store, clock, random }: Deps)
   const latest = new Map<string, Response>();
   for (const response of await store.readAll()) latest.set(response.questionId, response);
 
-  let units: Unit[] = [];
-  let unit: Unit | undefined;
-  let lastUnit: Unit | undefined;
+  let candidates: () => Unit[] = () => [];
+  let round: Unit[] = [];
+  let unitIndex = 0;
   let position = 0;
   let shownAt = 0;
   let responded = false;
+  let roundStartedAt = 0;
+  let items: RecapItem[] = [];
+  let recap: Recap | undefined;
+  let closingKey: string | undefined;
+
+  const isMistake = (question: Question) => latest.get(question.id)?.correct === false;
+
+  function keepFor(mode: Mode) {
+    switch (mode.kind) {
+      case 'free':
+        return undefined;
+      case 'drill':
+        return (question: Question) => inFocus(question, mode.focus);
+      case 'mistakes':
+        return isMistake;
+    }
+  }
 
   function tier(candidate: Unit) {
     if (candidate.questions.some((question) => !latest.has(question.id))) return UNSEEN;
-    if (candidate.questions.some((question) => !latest.get(question.id)?.correct)) return MISTAKE;
+    if (candidate.questions.some(isMistake)) return MISTAKE;
     return REST;
+  }
+
+  function shuffled<T>(list: T[]) {
+    const result = [...list];
+    for (let i = result.length - 1; i > 0; i--) {
+      const j = Math.floor(random() * (i + 1));
+      [result[i], result[j]] = [result[j], result[i]];
+    }
+    return result;
+  }
+
+  function planRound() {
+    const ordered = shuffled(candidates()).sort((a, b) => tier(a) - tier(b));
+    if (ordered.length > 1 && keyOf(ordered[0]) === closingKey) [ordered[0], ordered[1]] = [ordered[1], ordered[0]];
+
+    const planned: Unit[] = [];
+    let size = 0;
+    for (const unit of ordered) {
+      if (size >= ROUND_TARGET) break;
+      // a Question Set too big for what's left of the Round waits for the next one
+      if (planned.length > 0 && size + unit.questions.length > ROUND_CAP) continue;
+      planned.push(unit);
+      size += unit.questions.length;
+    }
+    return planned;
   }
 
   function show(index: number) {
@@ -129,23 +200,35 @@ export async function createPracticeEngine({ bank, store, clock, random }: Deps)
     responded = false;
   }
 
-  function serveNextUnit() {
-    const candidates = units.length > 1 ? units.filter((candidate) => candidate !== lastUnit) : units;
-    const best = Math.min(...candidates.map(tier));
-    const pool = candidates.filter((candidate) => tier(candidate) === best);
-    unit = pool[Math.floor(random() * pool.length)];
-    lastUnit = unit;
+  function nextRound() {
+    const planned = planRound();
+    if (planned.length === 0) return false;
+    round = planned;
+    unitIndex = 0;
+    items = [];
+    recap = undefined;
+    roundStartedAt = clock();
     show(0);
+    return true;
   }
 
   function requireUnit() {
-    if (!unit) throw new Error('practice has not been started');
-    return unit;
+    if (round.length === 0) throw new Error('practice has not been started');
+    if (recap) throw new Error('the Round is over');
+    return round[unitIndex];
   }
 
   function advance() {
-    if (position + 1 < requireUnit().questions.length) show(position + 1);
-    else serveNextUnit();
+    const unit = requireUnit();
+    if (position + 1 < unit.questions.length) {
+      show(position + 1);
+    } else if (unitIndex + 1 < round.length) {
+      unitIndex += 1;
+      show(0);
+    } else {
+      closingKey = keyOf(unit);
+      recap = { items, durationMs: clock() - roundStartedAt };
+    }
   }
 
   function current(): CurrentQuestion {
@@ -154,16 +237,19 @@ export async function createPracticeEngine({ bank, store, clock, random }: Deps)
   }
 
   return {
-    start(domain, focus) {
-      units = unitsOf(bank, domain, focus);
-      if (units.length === 0) throw new Error(`the Question Bank has no ${domain} Questions to serve`);
-      serveNextUnit();
+    start(domain, mode = { kind: 'free' }) {
+      const keep = keepFor(mode);
+      candidates = () => unitsOf(bank, domain, keep);
+      round = [];
+      closingKey = undefined;
+      return nextRound();
     },
 
     current,
 
     async respond(option) {
-      const { question } = current();
+      const served = current();
+      const { question } = served;
       if (responded) throw new Error(`Question ${question.id} already has a Response`);
       responded = true;
       const answeredAt = clock();
@@ -181,12 +267,14 @@ export async function createPracticeEngine({ bank, store, clock, random }: Deps)
         throw error;
       }
       latest.set(question.id, response);
-      return { correct: response.correct, correctOption: question.correctOption };
+      items.push({ ...served, outcome: response.correct ? 'correct' : 'wrong', option, durationMs: response.durationMs });
+      return { correct: response.correct, correctOption: question.correctOption, durationMs: response.durationMs };
     },
 
     skip() {
-      const { question } = current();
-      if (responded) throw new Error(`Question ${question.id} already has a Response`);
+      const served = current();
+      if (responded) throw new Error(`Question ${served.question.id} already has a Response`);
+      items.push({ ...served, outcome: 'skipped' });
       advance();
     },
 
@@ -196,8 +284,20 @@ export async function createPracticeEngine({ bank, store, clock, random }: Deps)
       advance();
     },
 
+    round() {
+      return { done: items.length, total: sizeOf(round) };
+    },
+
+    recap() {
+      return recap;
+    },
+
+    nextRound,
+
     progress(domain, focus) {
-      const questions = unitsOf(bank, domain, focus).flatMap((candidate) => candidate.questions);
+      const questions = unitsOf(bank, domain, focus && ((question) => inFocus(question, focus))).flatMap(
+        (candidate) => candidate.questions,
+      );
       const latestResponses = questions.flatMap((question) => latest.get(question.id) ?? []);
       const correct = latestResponses.filter((response) => response.correct).length;
       const seen = latestResponses.length;

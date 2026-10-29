@@ -13,11 +13,11 @@ type Props = {
   question: Question;
   chosen?: OptionNumber;
   feedback?: Feedback;
-  onRespond: (option: OptionNumber) => void;
+  onSelect: (option: OptionNumber) => void;
   onReport: () => void;
 };
 
-export function QuestionCard({ examId, sample, question, chosen, feedback, onRespond, onReport }: Props) {
+export function QuestionCard({ examId, sample, question, chosen, feedback, onSelect, onReport }: Props) {
   const colors = useColors();
 
   return (
@@ -43,7 +43,7 @@ export function QuestionCard({ examId, sample, question, chosen, feedback, onRes
             option={option}
             chosen={chosen}
             feedback={feedback}
-            onPress={onRespond}
+            onPress={onSelect}
           />
         ))}
       </View>

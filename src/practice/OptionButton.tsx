@@ -18,20 +18,29 @@ export function OptionButton({ examId, number, option, chosen, feedback, onPress
   const colors = useColors();
   const isCorrect = feedback?.correctOption === number;
   const isWrongChoice = feedback !== undefined && chosen === number && !isCorrect;
+  const isSelected = feedback === undefined && chosen === number;
 
   const tone = isCorrect
     ? { backgroundColor: colors.correctSoft, borderColor: colors.correct }
     : isWrongChoice
       ? { backgroundColor: colors.wrongSoft, borderColor: colors.wrong }
-      : { backgroundColor: 'transparent', borderColor: colors.border };
-  const markColor = isCorrect ? colors.correct : isWrongChoice ? colors.wrong : colors.textSecondary;
+      : isSelected
+        ? { backgroundColor: colors.accentSoft, borderColor: colors.accent }
+        : { backgroundColor: 'transparent', borderColor: colors.border };
+  const markColor = isCorrect
+    ? colors.correct
+    : isWrongChoice
+      ? colors.wrong
+      : isSelected
+        ? colors.accent
+        : colors.textSecondary;
 
   return (
     <Pressable
-      disabled={chosen !== undefined}
+      disabled={feedback !== undefined}
       onPress={() => onPress(number)}
       accessibilityRole="button"
-      accessibilityState={{ disabled: chosen !== undefined, selected: chosen === number }}
+      accessibilityState={{ disabled: feedback !== undefined, selected: chosen === number }}
       style={({ pressed }) => [
         styles.option,
         tone,

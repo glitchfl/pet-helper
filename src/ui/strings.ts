@@ -32,3 +32,8 @@ export function greeting(now: Date) {
   if (hour >= 17 && hour < 22) return 'ערב טוב';
   return 'לילה טוב';
 }
+
+export function clockTime(ms: number) {
+  const seconds = Math.round(ms / 1000);
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+}

@@ -93,8 +93,20 @@ A way of choosing which Questions to serve and how to present them.
 _Avoid_: Game, quiz type
 
 **Free Practice** (תרגול חופשי):
-The Mode that serves Questions from one Domain - unseen first, then previous mistakes, each Question Set kept together - with the Correct Option revealed after each Response.
+The Mode that serves Questions from one Domain in Rounds - unseen first, then previous mistakes, each Question Set kept together - with the Correct Option revealed after each Response.
 _Avoid_: Shuffle, drill, random mode
+
+**Mistakes Review** (תרגול טעויות):
+The Mode that serves only the Mistakes of one Domain, Round after Round, until none are left. A Question Set is served with just its Mistakes, still with its Passage or Chart.
+_Avoid_: Retry mode, error practice
+
+**Round** (סבב):
+About ten Questions picked when it starts, after which practice pauses for a Recap. A Question Set that would push it past 13 waits for the next Round.
+_Avoid_: Session, batch, set
+
+**Recap**:
+The summary at the end of a Round: how many Questions were right, wrong and skipped, how long it took, and the wrong ones to look at again.
+_Avoid_: Summary, results, score
 
 **Targeted Drill** (תרגול ממוקד):
 The Mode that serves only the Questions of the Focuses the learner picked within one Domain, ordered like Free Practice. A Question Set is served with just its Questions in those Focuses, still with its Passage or Chart.

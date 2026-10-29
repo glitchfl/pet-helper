@@ -6,3 +6,6 @@ export const COPYRIGHT_LINE = '© כל הזכויות שמורות למרכז ה
 export const WATERMARK_TEXT = 'המרכז הארצי לבחינות ולהערכה';
 
 export const REPO_URL = 'https://github.com/glitchfl/pet-helper';
+
+// the time printed on every Section, which sets the pace a learner has to keep
+export const SECTION_MS = 20 * 60 * 1000;
