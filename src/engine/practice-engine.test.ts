@@ -1,6 +1,6 @@
 import { createPracticeEngine, type PracticeEngine } from './practice-engine';
 import { createMemoryResponseStore, type Response } from './response-store';
-import { CORRECT, WRONG, chart, fakeClock, fixtureBank, passage, seededRandom } from './test-bank';
+import { CORRECT, WRONG, chart, fakeClock, fixtureBank, passage, seededRandom, typed } from './test-bank';
 import type { Exam, OptionNumber } from '@/bank/types';
 
 function saved(questionId: string, correct: boolean, answeredAt = 0): Response {
@@ -300,5 +300,102 @@ describe('Question Sets', () => {
 
     expect(engine.current().question.id).toBe('v2');
     expect(await store.readAll()).toEqual([]);
+  });
+});
+
+describe('Targeted Drill', () => {
+  const analogy = (id: string) => typed(id, 'אנלוגיות');
+  const comprehension = (id: string) => typed(id, 'שאלות הבנה והסקה');
+  const reading = (id: string) => typed(id, 'קטע קריאה');
+  const geometry = (id: string) => typed(id, 'שאלות ובעיות', 'גאומטריה');
+  const algebra = (id: string) => typed(id, 'שאלות ובעיות', 'אלגברה');
+  const chartInference = (id: string) => typed(id, 'הסקה מתרשים', 'ניתוח נתונים');
+
+  test('only Questions of the picked Question Type are served', async () => {
+    const { engine } = await engineFor(
+      fixtureBank({ verbal: [analogy('a1'), analogy('a2'), comprehension('c1'), comprehension('c2')] }),
+    );
+    engine.start('verbal', [{ questionType: 'אנלוגיות' }]);
+
+    expect(new Set(await answerServed(engine, 6))).toEqual(new Set(['a1', 'a2']));
+  });
+
+  test('a Topic narrows its Question Type to the Questions on that Topic', async () => {
+    const { engine } = await engineFor(fixtureBank({ quantitative: [geometry('g1'), algebra('x1'), geometry('g2')] }));
+    engine.start('quantitative', [{ questionType: 'שאלות ובעיות', topic: 'גאומטריה' }]);
+
+    expect(new Set(await answerServed(engine, 6))).toEqual(new Set(['g1', 'g2']));
+  });
+
+  test('Questions from every picked Focus are served together', async () => {
+    const { engine } = await engineFor(
+      fixtureBank({ quantitative: [geometry('g1'), algebra('x1'), chart('ch', [chartInference('t1'), chartInference('t2')])] }),
+    );
+    engine.start('quantitative', [{ questionType: 'שאלות ובעיות', topic: 'גאומטריה' }, { questionType: 'הסקה מתרשים' }]);
+
+    expect(new Set(await answerServed(engine, 9))).toEqual(new Set(['g1', 't1', 't2']));
+  });
+
+  test('Unseen Questions in the Focus come first, then its Mistakes', async () => {
+    const { engine } = await engineFor(
+      fixtureBank({ verbal: [analogy('a1'), analogy('a2'), analogy('a3'), comprehension('c1')] }),
+      { responses: [saved('a1', true), saved('a2', false)] },
+    );
+    engine.start('verbal', [{ questionType: 'אנלוגיות' }]);
+
+    expect(await answerServed(engine, 2)).toEqual(['a3', 'a2']);
+  });
+
+  test('a Question Set keeps only its Questions in the Focus, still with its Passage', async () => {
+    const { engine } = await engineFor(
+      fixtureBank({ verbal: [passage('p1', [reading('v1'), analogy('v2'), reading('v3')])] }),
+    );
+    engine.start('verbal', [{ questionType: 'קטע קריאה' }]);
+
+    expect(engine.current().questionSet?.id).toBe('p1');
+    expect(await answerServed(engine, 4)).toEqual(['v1', 'v3', 'v1', 'v3']);
+  });
+
+  test('progress can be narrowed to a Focus', async () => {
+    const { engine } = await engineFor(
+      fixtureBank({ verbal: [analogy('a1'), analogy('a2'), comprehension('c1')] }),
+      { responses: [saved('a1', false), saved('c1', true)] },
+    );
+
+    expect(engine.progress('verbal', [{ questionType: 'אנלוגיות' }])).toEqual({
+      total: 2,
+      seen: 1,
+      percentCorrect: 0,
+      mistakes: 1,
+    });
+  });
+
+  test('a Question Type is offered whole, or as its Topics when it spans several', async () => {
+    const { engine } = await engineFor(
+      fixtureBank({
+        quantitative: [algebra('x1'), geometry('g1'), geometry('g2'), chart('ch', [chartInference('t1'), chartInference('t2')])],
+      }),
+    );
+
+    expect(engine.focuses('quantitative')).toEqual([
+      { questionType: 'שאלות ובעיות', topic: 'גאומטריה' },
+      { questionType: 'שאלות ובעיות', topic: 'אלגברה' },
+      { questionType: 'הסקה מתרשים' },
+    ]);
+  });
+
+  test('only the Domain\'s Question Types are offered, the biggest first', async () => {
+    const { engine } = await engineFor(
+      fixtureBank({
+        verbal: [analogy('a1'), comprehension('c1'), comprehension('c2'), passage('p1', [reading('r1'), reading('r2'), reading('r3')])],
+        quantitative: [geometry('g1')],
+      }),
+    );
+
+    expect(engine.focuses('verbal')).toEqual([
+      { questionType: 'קטע קריאה' },
+      { questionType: 'שאלות הבנה והסקה' },
+      { questionType: 'אנלוגיות' },
+    ]);
   });
 });

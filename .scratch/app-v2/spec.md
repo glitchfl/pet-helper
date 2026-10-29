@@ -16,7 +16,7 @@ v1 proved the Question Bank and the Free Practice engine, but as an app it isn't
 A calm, native-feeling Hebrew app with four tabs (Today, Practice, Progress, Settings) and five Modes:
 
 - **Free Practice** — one Domain, unseen first, then Mistakes, in Rounds of about 10 with a Recap.
-- **Targeted Drill** — one Question Type or one Topic, same Rounds.
+- **Targeted Drill** — one or more Focuses (Question Types or Topics) of one Domain, same Rounds.
 - **Mistakes Review** — only your Mistakes, until none are left.
 - **Timed Section** — one Section against a 20-minute clock under real-exam rules.
 - **Exam Simulation** — a whole Exam, four timed Sections, then a Score Estimate from NITE's own conversion tables.
@@ -48,7 +48,7 @@ Answering in the practice Modes is select-then-Check. Around them: Bookmarks, a 
 
 11. As a learner, I want Free Practice per Domain in Rounds of about 10 Questions, so that sessions have a natural end.
 12. As a learner, I want a Recap after each Round (right, wrong, skipped, time) with the option to review what I missed, continue, or stop.
-13. As a learner, I want to drill one Question Type (e.g. analogies) or one Topic (e.g. geometry), with my accuracy shown next to each.
+13. As a learner, I want to drill the Question Types (e.g. analogies) and Topics (e.g. geometry) I pick, one or several at once, with my accuracy shown next to each.
 14. As a learner, I want a Mistakes Review that serves only my Mistakes until none remain.
 15. As a learner, I want to Bookmark any Question and later practice or browse my Bookmarks.
 

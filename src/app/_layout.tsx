@@ -38,6 +38,7 @@ export default function RootLayout() {
               }}
             >
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="drill" options={{ title: '' }} />
               <Stack.Screen name="session" options={{ title: '' }} />
               <Stack.Screen name="formula-sheet" options={{ title: 'דף נוסחאות', presentation: 'modal' }} />
             </Stack>

@@ -10,6 +10,9 @@ export type CurrentQuestion = {
   question: Question;
 };
 
+// a Question Type, narrowed to one of its Topics when the type spans several
+export type Focus = { questionType: string; topic?: string };
+
 export type Progress = {
   total: number;
   seen: number;
@@ -18,12 +21,13 @@ export type Progress = {
 };
 
 export type PracticeEngine = {
-  start(domain: Domain): void;
+  start(domain: Domain, focus?: Focus[]): void;
   current(): CurrentQuestion;
   respond(option: OptionNumber): Promise<Feedback>;
   skip(): void;
   next(): void;
-  progress(domain: Domain): Progress;
+  progress(domain: Domain, focus?: Focus[]): Progress;
+  focuses(domain: Domain): Focus[];
 };
 
 type Deps = {
@@ -44,7 +48,14 @@ const UNSEEN = 0;
 const MISTAKE = 1;
 const REST = 2;
 
-function unitsOf(bank: QuestionBank, domain: Domain): Unit[] {
+function inFocus(question: Question, focus: Focus[]) {
+  return focus.some(
+    ({ questionType, topic }) =>
+      questionType === question.questionType && (topic === undefined || topic === question.topic),
+  );
+}
+
+function unitsOf(bank: QuestionBank, domain: Domain, focus?: Focus[]): Unit[] {
   const units: Unit[] = [];
   for (const exam of bank) {
     const sets = new Map(exam.questionSets.map((questionSet) => [questionSet.id, questionSet]));
@@ -67,7 +78,32 @@ function unitsOf(bank: QuestionBank, domain: Domain): Unit[] {
       }
     }
   }
-  return units;
+  if (!focus) return units;
+  return units.flatMap((unit) => {
+    const questions = unit.questions.filter((question) => inFocus(question, focus));
+    return questions.length > 0 ? [{ ...unit, questions }] : [];
+  });
+}
+
+function biggestFirst<T>(counts: Map<T, number>, name: (key: T) => string): T[] {
+  return [...counts.keys()].sort((a, b) => counts.get(b)! - counts.get(a)! || name(a).localeCompare(name(b), 'he'));
+}
+
+function focusesOf(bank: QuestionBank, domain: Domain): Focus[] {
+  const typeCounts = new Map<string, number>();
+  const topicCounts = new Map<string, Map<string | undefined, number>>();
+  for (const question of unitsOf(bank, domain).flatMap((unit) => unit.questions)) {
+    const { questionType, topic } = question;
+    typeCounts.set(questionType, (typeCounts.get(questionType) ?? 0) + 1);
+    const topics = topicCounts.get(questionType) ?? new Map<string | undefined, number>();
+    topics.set(topic, (topics.get(topic) ?? 0) + 1);
+    topicCounts.set(questionType, topics);
+  }
+  return biggestFirst(typeCounts, (questionType) => questionType).flatMap((questionType) => {
+    const topics = topicCounts.get(questionType)!;
+    if (topics.size === 1) return [{ questionType }];
+    return biggestFirst(topics, (topic) => topic ?? '').map((topic) => ({ questionType, topic }));
+  });
 }
 
 export async function createPracticeEngine({ bank, store, clock, random }: Deps): Promise<PracticeEngine> {
@@ -103,7 +139,7 @@ export async function createPracticeEngine({ bank, store, clock, random }: Deps)
   }
 
   function requireUnit() {
-    if (!unit) throw new Error('Free Practice has not been started');
+    if (!unit) throw new Error('practice has not been started');
     return unit;
   }
 
@@ -118,9 +154,9 @@ export async function createPracticeEngine({ bank, store, clock, random }: Deps)
   }
 
   return {
-    start(domain) {
-      units = unitsOf(bank, domain);
-      if (units.length === 0) throw new Error(`the Question Bank has no ${domain} Questions`);
+    start(domain, focus) {
+      units = unitsOf(bank, domain, focus);
+      if (units.length === 0) throw new Error(`the Question Bank has no ${domain} Questions to serve`);
       serveNextUnit();
     },
 
@@ -160,8 +196,8 @@ export async function createPracticeEngine({ bank, store, clock, random }: Deps)
       advance();
     },
 
-    progress(domain) {
-      const questions = unitsOf(bank, domain).flatMap((candidate) => candidate.questions);
+    progress(domain, focus) {
+      const questions = unitsOf(bank, domain, focus).flatMap((candidate) => candidate.questions);
       const latestResponses = questions.flatMap((question) => latest.get(question.id) ?? []);
       const correct = latestResponses.filter((response) => response.correct).length;
       const seen = latestResponses.length;
@@ -171,6 +207,10 @@ export async function createPracticeEngine({ bank, store, clock, random }: Deps)
         percentCorrect: seen === 0 ? null : Math.round((correct / seen) * 100),
         mistakes: seen - correct,
       };
+    },
+
+    focuses(domain) {
+      return focusesOf(bank, domain);
     },
   };
 }

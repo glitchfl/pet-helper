@@ -95,3 +95,11 @@ _Avoid_: Game, quiz type
 **Free Practice** (תרגול חופשי):
 The Mode that serves Questions from one Domain - unseen first, then previous mistakes, each Question Set kept together - with the Correct Option revealed after each Response.
 _Avoid_: Shuffle, drill, random mode
+
+**Targeted Drill** (תרגול ממוקד):
+The Mode that serves only the Questions of the Focuses the learner picked within one Domain, ordered like Free Practice. A Question Set is served with just its Questions in those Focuses, still with its Passage or Chart.
+_Avoid_: Category practice, filtered practice
+
+**Focus**:
+One thing a Targeted Drill can be narrowed to: a Question Type, or one Topic of a Question Type whose Questions span several Topics (e.g. geometry within שאלות ובעיות).
+_Avoid_: Category, subclass, filter
