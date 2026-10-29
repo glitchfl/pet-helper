@@ -1,9 +1,9 @@
 import { Link, Stack, Unmatched, useLocalSearchParams } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Domain, OptionNumber } from '@/bank/types';
-import type { CurrentQuestion, Feedback } from '@/engine/practice-engine';
+import type { CurrentQuestion, Feedback, Focus } from '@/engine/practice-engine';
 import { CopyrightLine, Watermark } from '@/practice/NiteMarkings';
 import { PassageText } from '@/practice/PassageText';
 import { usePracticeEngine } from '@/practice/PracticeProvider';
@@ -12,15 +12,30 @@ import { reportUrl } from '@/practice/report';
 import { SetTabs, type SetTab } from '@/practice/SetTabs';
 import { BankImage } from '@/ui/BankImage';
 import { RichText } from '@/ui/RichText';
-import { DOMAIN_NAMES, isDomain } from '@/ui/strings';
+import { DOMAIN_NAMES, focusName, isDomain } from '@/ui/strings';
 import { useColors } from '@/ui/theme';
 
 export default function PracticeRoute() {
-  const { domain } = useLocalSearchParams<{ domain: string }>();
-  return isDomain(domain) ? <PracticeScreen domain={domain} /> : <Unmatched />;
+  const { domain, focus } = useLocalSearchParams<{ domain: string; focus?: string }>();
+  const parsedFocus = useMemo(() => (focus === undefined ? undefined : parseFocus(focus)), [focus]);
+  if (!isDomain(domain) || parsedFocus === null) return <Unmatched />;
+  return <PracticeScreen domain={domain} focus={parsedFocus} />;
 }
 
-function PracticeScreen({ domain }: { domain: Domain }) {
+function parseFocus(param: string): Focus[] | null {
+  try {
+    const focus: unknown = JSON.parse(param);
+    const valid =
+      Array.isArray(focus) &&
+      focus.length > 0 &&
+      focus.every((item) => typeof item?.questionType === 'string' && ['string', 'undefined'].includes(typeof item.topic));
+    return valid ? focus : null;
+  } catch {
+    return null;
+  }
+}
+
+function PracticeScreen({ domain, focus }: { domain: Domain; focus?: Focus[] }) {
   const engine = usePracticeEngine();
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -43,9 +58,9 @@ function PracticeScreen({ domain }: { domain: Domain }) {
   }
 
   useEffect(() => {
-    engine.start(domain);
+    engine.start(domain, focus);
     show(engine.current());
-  }, [engine, domain]);
+  }, [engine, domain, focus]);
 
   async function respond(option: OptionNumber) {
     if (locked.current) return;
@@ -72,7 +87,7 @@ function PracticeScreen({ domain }: { domain: Domain }) {
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
       <Stack.Screen
         options={{
-          title: DOMAIN_NAMES[domain],
+          title: focus?.length === 1 ? focusName(focus[0]) : DOMAIN_NAMES[domain],
           headerRight: formulaSheetExam
             ? () => (
                 <Link href={{ pathname: '/formula-sheet', params: { exam: formulaSheetExam } }} asChild>

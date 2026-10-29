@@ -47,19 +47,22 @@ type RowProps = {
   iconColor?: string;
   accessory?: ReactNode;
   chevron?: boolean;
+  checked?: boolean;
   destructive?: boolean;
   onPress?: () => void;
 };
 
-export function ListRow({ title, subtitle, value, icon, iconColor, accessory, chevron, destructive, onPress }: RowProps) {
+export function ListRow({ title, subtitle, value, icon, iconColor, accessory, chevron, checked, destructive, onPress }: RowProps) {
   const colors = useColors();
-  const showChevron = chevron ?? onPress !== undefined;
+  const checkable = checked !== undefined;
+  const showChevron = chevron ?? (onPress !== undefined && !checkable);
 
   return (
     <Pressable
       onPress={onPress}
       disabled={!onPress}
-      accessibilityRole={onPress ? 'button' : undefined}
+      accessibilityRole={checkable ? 'checkbox' : onPress ? 'button' : undefined}
+      accessibilityState={checkable ? { checked } : undefined}
       style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.fill }]}
     >
       {icon && (
@@ -83,6 +86,7 @@ export function ListRow({ title, subtitle, value, icon, iconColor, accessory, ch
         </Text>
       )}
       {accessory}
+      {checked && <Icon name="check" size={17} color={colors.accent} />}
       {showChevron && <Icon name="forward" size={13} color={colors.textTertiary} />}
     </Pressable>
   );

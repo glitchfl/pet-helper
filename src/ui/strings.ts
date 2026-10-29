@@ -1,4 +1,5 @@
 import type { Domain, Exam, Season } from '@/bank/types';
+import type { Focus } from '@/engine/practice-engine';
 
 export const DOMAIN_NAMES: Record<Domain, string> = {
   verbal: 'חשיבה מילולית',
@@ -7,6 +8,10 @@ export const DOMAIN_NAMES: Record<Domain, string> = {
 
 export function isDomain(value: unknown): value is Domain {
   return value === 'verbal' || value === 'quantitative';
+}
+
+export function focusName(focus: Focus) {
+  return focus.topic ?? focus.questionType;
 }
 
 const SEASON_NAMES: Record<Season, string> = {
