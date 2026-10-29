@@ -22,7 +22,10 @@ async function engineFor(bank: Exam[], options: { random?: () => number; respons
 async function answerServed(engine: PracticeEngine, count: number, option: OptionNumber = CORRECT) {
   const ids: string[] = [];
   for (let i = 0; i < count; i++) {
-    if (i > 0) engine.next();
+    if (i > 0) {
+      engine.next();
+      if (engine.recap()) engine.nextRound();
+    }
     ids.push(engine.current().question.id);
     await engine.respond(option);
   }
@@ -34,14 +37,14 @@ describe('responding', () => {
     const { engine } = await engineFor(fixtureBank({ verbal: ['v1'] }));
     engine.start('verbal');
 
-    expect(await engine.respond(CORRECT)).toEqual({ correct: true, correctOption: CORRECT });
+    expect(await engine.respond(CORRECT)).toMatchObject({ correct: true, correctOption: CORRECT });
   });
 
   test('a wrong Option is reported as wrong along with the Correct Option', async () => {
     const { engine } = await engineFor(fixtureBank({ verbal: ['v1'] }));
     engine.start('verbal');
 
-    expect(await engine.respond(WRONG)).toEqual({ correct: false, correctOption: CORRECT });
+    expect(await engine.respond(WRONG)).toMatchObject({ correct: false, correctOption: CORRECT });
   });
 
   test('the Options are locked once the Question has a Response', async () => {
@@ -50,6 +53,14 @@ describe('responding', () => {
     await engine.respond(WRONG);
 
     await expect(engine.respond(CORRECT)).rejects.toThrow();
+  });
+
+  test('the feedback says how long the Question took', async () => {
+    const { engine, clock } = await engineFor(fixtureBank({ verbal: ['v1'] }));
+    engine.start('verbal');
+    clock.advance(42_000);
+
+    expect(await engine.respond(CORRECT)).toEqual({ correct: true, correctOption: CORRECT, durationMs: 42_000 });
   });
 
   test('a Response records the Option, its correctness, when it was answered and how long it took', async () => {
@@ -76,12 +87,7 @@ describe('serving', () => {
     const { engine } = await engineFor(fixtureBank({ verbal: ['v1', 'v2'], quantitative: ['q1', 'q2'] }));
     engine.start('quantitative');
 
-    const served = [engine.current().question.id];
-    for (let i = 0; i < 5; i++) {
-      await engine.respond(CORRECT);
-      engine.next();
-      served.push(engine.current().question.id);
-    }
+    const served = await answerServed(engine, 6);
 
     expect(served.every((id) => id.startsWith('q'))).toBe(true);
   });
@@ -185,8 +191,9 @@ describe('serving', () => {
     });
     engine.start('verbal');
     engine.skip();
-    await engine.respond(CORRECT);
+    await answerServed(engine, 2);
     engine.next();
+    engine.nextRound();
 
     expect(engine.current().question.id).toBe('v3');
     expect((await store.readAll()).filter((response) => response.questionId === 'v3')).toEqual([]);
@@ -315,14 +322,14 @@ describe('Targeted Drill', () => {
     const { engine } = await engineFor(
       fixtureBank({ verbal: [analogy('a1'), analogy('a2'), comprehension('c1'), comprehension('c2')] }),
     );
-    engine.start('verbal', [{ questionType: 'אנלוגיות' }]);
+    engine.start('verbal', { kind: 'drill', focus: [{ questionType: 'אנלוגיות' }] });
 
     expect(new Set(await answerServed(engine, 6))).toEqual(new Set(['a1', 'a2']));
   });
 
   test('a Topic narrows its Question Type to the Questions on that Topic', async () => {
     const { engine } = await engineFor(fixtureBank({ quantitative: [geometry('g1'), algebra('x1'), geometry('g2')] }));
-    engine.start('quantitative', [{ questionType: 'שאלות ובעיות', topic: 'גאומטריה' }]);
+    engine.start('quantitative', { kind: 'drill', focus: [{ questionType: 'שאלות ובעיות', topic: 'גאומטריה' }] });
 
     expect(new Set(await answerServed(engine, 6))).toEqual(new Set(['g1', 'g2']));
   });
@@ -331,7 +338,10 @@ describe('Targeted Drill', () => {
     const { engine } = await engineFor(
       fixtureBank({ quantitative: [geometry('g1'), algebra('x1'), chart('ch', [chartInference('t1'), chartInference('t2')])] }),
     );
-    engine.start('quantitative', [{ questionType: 'שאלות ובעיות', topic: 'גאומטריה' }, { questionType: 'הסקה מתרשים' }]);
+    engine.start('quantitative', {
+      kind: 'drill',
+      focus: [{ questionType: 'שאלות ובעיות', topic: 'גאומטריה' }, { questionType: 'הסקה מתרשים' }],
+    });
 
     expect(new Set(await answerServed(engine, 9))).toEqual(new Set(['g1', 't1', 't2']));
   });
@@ -341,7 +351,7 @@ describe('Targeted Drill', () => {
       fixtureBank({ verbal: [analogy('a1'), analogy('a2'), analogy('a3'), comprehension('c1')] }),
       { responses: [saved('a1', true), saved('a2', false)] },
     );
-    engine.start('verbal', [{ questionType: 'אנלוגיות' }]);
+    engine.start('verbal', { kind: 'drill', focus: [{ questionType: 'אנלוגיות' }] });
 
     expect(await answerServed(engine, 2)).toEqual(['a3', 'a2']);
   });
@@ -350,7 +360,7 @@ describe('Targeted Drill', () => {
     const { engine } = await engineFor(
       fixtureBank({ verbal: [passage('p1', [reading('v1'), analogy('v2'), reading('v3')])] }),
     );
-    engine.start('verbal', [{ questionType: 'קטע קריאה' }]);
+    engine.start('verbal', { kind: 'drill', focus: [{ questionType: 'קטע קריאה' }] });
 
     expect(engine.current().questionSet?.id).toBe('p1');
     expect(await answerServed(engine, 4)).toEqual(['v1', 'v3', 'v1', 'v3']);
@@ -397,5 +407,189 @@ describe('Targeted Drill', () => {
       { questionType: 'שאלות הבנה והסקה' },
       { questionType: 'אנלוגיות' },
     ]);
+  });
+});
+
+describe('Rounds', () => {
+  const ids = (prefix: string, count: number) => Array.from({ length: count }, (_, i) => `${prefix}${i + 1}`);
+
+  async function finishRound(engine: PracticeEngine) {
+    const served = await answerServed(engine, engine.round().total);
+    engine.next();
+    return served;
+  }
+
+  test('a Round holds ten Questions when the Domain has more', async () => {
+    const { engine } = await engineFor(fixtureBank({ verbal: ids('v', 25) }));
+    engine.start('verbal');
+
+    expect(engine.round()).toEqual({ done: 0, total: 10 });
+  });
+
+  test('a Round of a small Domain holds all of it', async () => {
+    const { engine } = await engineFor(fixtureBank({ verbal: ids('v', 3) }));
+    engine.start('verbal');
+
+    expect(engine.round()).toEqual({ done: 0, total: 3 });
+  });
+
+  test('answered and skipped Questions both count toward the Round', async () => {
+    const { engine } = await engineFor(fixtureBank({ verbal: ids('v', 3) }));
+    engine.start('verbal');
+    await engine.respond(CORRECT);
+    engine.next();
+    engine.skip();
+
+    expect(engine.round()).toEqual({ done: 2, total: 3 });
+  });
+
+  test('a Question Set that would push the Round past 13 Questions waits for the next Round', async () => {
+    const big = ids('p', 6);
+    const { engine } = await engineFor(fixtureBank({ verbal: [...ids('u', 8), passage('p', big), 'r1', 'r2'] }), {
+      responses: [...big.map((id, i) => saved(id, i > 0)), saved('r1', true), saved('r2', true)],
+    });
+    engine.start('verbal');
+
+    const first = await finishRound(engine);
+    engine.nextRound();
+
+    expect(first).toHaveLength(10);
+    expect(first.filter((id) => big.includes(id))).toEqual([]);
+    expect(engine.current().question.id).toBe('p1');
+  });
+
+  test('a Round always takes its first Question Set, however big', async () => {
+    const { engine } = await engineFor(fixtureBank({ verbal: [passage('p', ids('p', 15))] }));
+    engine.start('verbal');
+
+    expect(engine.round().total).toBe(15);
+  });
+
+  test('the Question that closed a Round does not open the next one', async () => {
+    for (let seed = 1; seed <= 20; seed++) {
+      const { engine } = await engineFor(fixtureBank({ verbal: ['v1', 'v2'] }), { random: seededRandom(seed) });
+      engine.start('verbal');
+      const closing = (await finishRound(engine)).at(-1);
+      engine.nextRound();
+
+      expect(engine.current().question.id).not.toBe(closing);
+    }
+  });
+
+  test('there is no Recap and nothing more to serve until the Round is over', async () => {
+    const { engine } = await engineFor(fixtureBank({ verbal: ids('v', 2) }));
+    engine.start('verbal');
+    await engine.respond(CORRECT);
+    engine.next();
+
+    expect(engine.recap()).toBeUndefined();
+    await engine.respond(CORRECT);
+    engine.next();
+    expect(() => engine.current()).toThrow();
+  });
+
+  test('the Recap lists every Question of the Round with how it went, and how long the Round took', async () => {
+    const { engine, clock } = await engineFor(fixtureBank({ verbal: ids('v', 3) }));
+    engine.start('verbal');
+    const served = [engine.current().question.id];
+    clock.advance(20_000);
+    await engine.respond(CORRECT);
+    clock.advance(3_000);
+    engine.next();
+    served.push(engine.current().question.id);
+    clock.advance(5_000);
+    engine.skip();
+    served.push(engine.current().question.id);
+    clock.advance(40_000);
+    await engine.respond(WRONG);
+    engine.next();
+
+    const recap = engine.recap()!;
+    expect(recap.durationMs).toBe(68_000);
+    expect(recap.items.map(({ question, outcome, option, durationMs }) => ({ id: question.id, outcome, option, durationMs }))).toEqual([
+      { id: served[0], outcome: 'correct', option: CORRECT, durationMs: 20_000 },
+      { id: served[1], outcome: 'skipped', option: undefined, durationMs: undefined },
+      { id: served[2], outcome: 'wrong', option: WRONG, durationMs: 40_000 },
+    ]);
+  });
+
+  test('a Recap item keeps the Passage its Question was served with', async () => {
+    const { engine } = await engineFor(fixtureBank({ verbal: [passage('p1', ['v1'])] }));
+    engine.start('verbal');
+    await engine.respond(WRONG);
+    engine.next();
+
+    expect(engine.recap()!.items[0].questionSet?.id).toBe('p1');
+  });
+
+  test('the next Round starts a fresh Recap', async () => {
+    const { engine } = await engineFor(fixtureBank({ verbal: ids('v', 2) }));
+    engine.start('verbal');
+    await finishRound(engine);
+    engine.nextRound();
+
+    expect(engine.recap()).toBeUndefined();
+    expect(engine.round()).toEqual({ done: 0, total: 2 });
+  });
+});
+
+describe('Mistakes Review', () => {
+  const mistakes = { kind: 'mistakes' } as const;
+
+  test('only the Domain\'s Mistakes are served', async () => {
+    const { engine } = await engineFor(fixtureBank({ verbal: ['v1', 'v2', 'v3', 'v4'], quantitative: ['q1'] }), {
+      responses: [saved('v1', true), saved('v2', false), saved('v4', false), saved('q1', false)],
+    });
+    engine.start('verbal', mistakes);
+
+    expect(engine.round().total).toBe(2);
+    expect(new Set(await answerServed(engine, 2))).toEqual(new Set(['v2', 'v4']));
+  });
+
+  test('a Mistake answered wrong again comes back in the next Round, a fixed one does not', async () => {
+    const { engine } = await engineFor(fixtureBank({ verbal: ['v1', 'v2'] }), {
+      random: () => 0,
+      responses: [saved('v1', false), saved('v2', false)],
+    });
+    engine.start('verbal', mistakes);
+    const fixed = engine.current().question.id;
+    await engine.respond(CORRECT);
+    engine.next();
+    const missed = engine.current().question.id;
+    await engine.respond(WRONG);
+    engine.next();
+
+    expect(engine.nextRound()).toBe(true);
+    expect(engine.round().total).toBe(1);
+    expect(engine.current().question.id).toBe(missed);
+    expect(missed).not.toBe(fixed);
+  });
+
+  test('the Review ends once no Mistakes are left', async () => {
+    const { engine } = await engineFor(fixtureBank({ verbal: ['v1', 'v2'] }), {
+      responses: [saved('v1', false), saved('v2', true)],
+    });
+    engine.start('verbal', mistakes);
+    await engine.respond(CORRECT);
+    engine.next();
+
+    expect(engine.nextRound()).toBe(false);
+  });
+
+  test('a Review with no Mistakes has nothing to serve', async () => {
+    const { engine } = await engineFor(fixtureBank({ verbal: ['v1', 'v2'] }), { responses: [saved('v1', true)] });
+
+    expect(engine.start('verbal', mistakes)).toBe(false);
+    expect(() => engine.current()).toThrow();
+  });
+
+  test('a Question Set is reviewed with just its Mistakes, still with its Passage', async () => {
+    const { engine } = await engineFor(fixtureBank({ verbal: [passage('p1', ['v1', 'v2', 'v3'])] }), {
+      responses: [saved('v1', true), saved('v2', false), saved('v3', false)],
+    });
+    engine.start('verbal', mistakes);
+
+    expect(engine.current().questionSet?.id).toBe('p1');
+    expect(await answerServed(engine, 2)).toEqual(['v2', 'v3']);
   });
 });

@@ -6,7 +6,7 @@ A free, open-source iPhone and Android app for practicing the Verbal and Quantit
 
 ## What it does
 
-Free Practice (תרגול חופשי) serves one Domain at a time. Unseen Questions come first, then your Mistakes, then everything else. A Passage or Chart is always served together with all of its Questions. Tap an Option to see right away whether it was right and which Option is correct. Every Response stays on your phone, with no account and nothing sent anywhere.
+Free Practice (תרגול חופשי) serves one Domain at a time. Unseen Questions come first, then your Mistakes, then everything else. A Passage or Chart is always served together with all of its Questions. Pick an Option and press Check to see whether it was right, which Option is correct and how long you took. Questions come in Rounds of about ten, each ending in a Recap that compares your time with the exam's pace and lets you look at what you got wrong. Targeted Drill (תרגול ממוקד) narrows practice to the Question Types and Topics you pick, and Mistakes Review (תרגול טעויות) serves only your Mistakes until none are left. Every Response stays on your phone, with no account and nothing sent anywhere.
 
 The domain vocabulary is in [GLOSSARY.md](GLOSSARY.md) and the key decisions are in [docs/adr](docs/adr).
 
