@@ -28,7 +28,15 @@ export default function RootLayout() {
       <ThemeProvider value={theme}>
         <LocaleProvider direction="rtl">
           <PracticeProvider>
-            <Stack screenOptions={{ headerShadowVisible: false, headerBackButtonDisplayMode: 'minimal' }}>
+            {/* without a background the ios 26 header is see-through glass with the screen laid out under it -
+                an opaque one keeps the top of the content visible */}
+            <Stack
+              screenOptions={{
+                headerShadowVisible: false,
+                headerBackButtonDisplayMode: 'minimal',
+                headerStyle: { backgroundColor: colors.background },
+              }}
+            >
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen name="session" options={{ title: '' }} />
               <Stack.Screen name="formula-sheet" options={{ title: 'דף נוסחאות', presentation: 'modal' }} />

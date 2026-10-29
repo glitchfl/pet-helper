@@ -20,7 +20,7 @@ Look at the app the way a learner meets it: a debug build in the iOS simulator o
 
 ## Reaching a screen
 
-- **Deep link:** `open <route>`, where the route is the file path under `src/app/` without the `(group)` folders, plus the screen's params as a query. For example, `session?domain=verbal`, `formula-sheet?exam=winter-2025` or `settings/about`.
+- **Deep link:** `open <route>`, where the route is the file path under `src/app/` without the `(group)` folders, plus the screen's params as a query. For example, `session?domain=verbal`, `formula-sheet?exam=winter-2025` or `settings/about`. A link opened while a modal is up pushes its screen inside that modal, so `restart` first.
 - **Taps:** Android only. `tree` lists what is on screen, and `tap` takes a text, an accessibility label or a point read off a shot. iOS has no tap driver, so walk a flow on Android, then reach the same screen on iOS by deep link or by seeding state.
 - **State:** everything the learner did lives in one SQLite file. On iOS it is `$(xcrun simctl get_app_container booted com.glitchfl.pethelper data)/Documents/SQLite/pet-helper.db`. Read or seed it with `sqlite3`, then `restart`. On Android, `adb shell pm clear com.glitchfl.pethelper` wipes it.
 
