@@ -8,6 +8,8 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "ios": {
+      "bundleIdentifier": "com.glitchfl.pethelper",
+      "appleTeamId": "WZM64T79MK",
       "supportsTablet": true
     },
     "android": {
@@ -39,7 +41,7 @@
       "typedRoutes": true
     },
     "runtimeVersion": {
-      "policy": "sdkVersion"
+      "policy": "fingerprint"
     },
     "extra": {
       "eas": {
@@ -48,7 +50,10 @@
     },
     "owner": "glitchfl",
     "updates": {
-      "url": "https://u.expo.dev/84ac06b1-1f0e-402f-a4c3-44a64155a2c9"
+      "url": "https://u.expo.dev/84ac06b1-1f0e-402f-a4c3-44a64155a2c9",
+      "requestHeaders": {
+        "expo-channel-name": "production"
+      }
     }
   }
 }

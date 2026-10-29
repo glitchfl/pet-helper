@@ -14,10 +14,11 @@ The domain vocabulary is in [GLOSSARY.md](GLOSSARY.md) and the key decisions are
 
 ```sh
 npm install
-npx expo start
+npm run ios         # builds the app into the iPhone simulator and starts Metro
+npm run android     # the same on the Android emulator
 ```
 
-Scan the QR code with the Expo Go app on your phone.
+The app doesn't run in Expo Go (see [ADR 0005](docs/adr/0005-installed-builds-instead-of-expo-go.md)). The first run compiles the native app, which takes a few minutes. After that, `npm start` with the app already installed is enough, until a native module is added. The `ios/` and `android/` folders are generated from `app.json` and stay out of git.
 
 ```sh
 npm test            # practice engine and bank check
@@ -57,9 +58,9 @@ Skim the Proof Sheet once per Exam before shipping it.
 
 ## Installing and updating
 
-iPhone users open the app in Expo Go, so no paid Apple Developer account is involved. Android users install an APK built with EAS Build. Both get new Exams and fixes over the air from EAS Update on the `production` channel.
+Each phone runs its own installed build of the app, with no paid Apple Developer account involved. Both get new Exams and fixes over the air from EAS Update on the `production` channel.
 
-The update runtime is pinned to the Expo SDK (`runtimeVersion.policy: sdkVersion`), because that is the only runtime Expo Go accepts. Upgrading the Expo SDK therefore needs a new APK.
+The update runtime is the native fingerprint (`runtimeVersion.policy: fingerprint`), so an update only reaches builds with the same native code. After adding or upgrading a native module or the Expo SDK, install new builds on both phones. `fingerprint.config.js` keeps the npm scripts and `.gitignore` out of the fingerprint, since they never reach the native build.
 
 ### One-time setup
 
@@ -71,13 +72,25 @@ npx eas-cli@latest update:configure   # writes updates.url into app.json
 
 Commit the `app.json` changes these make.
 
+### Installing on the iPhone
+
+The iPhone build is compiled on the Mac and signed with the free Personal Team of the Apple ID signed in to Xcode (Xcode > Settings > Accounts). Its team id is `ios.appleTeamId` in `app.json`. Without a signed-in account the build stops with "No Accounts".
+
+Xcode has to be at least as new as the iPhone's iOS, e.g. Xcode 27 for iOS 27. An older Xcode stops with "The developer disk image could not be mounted on this device".
+
+1. Connect the iPhone to the Mac with a cable. After the first time, being on the same Wi-Fi is enough. Developer Mode must be on (Settings > Privacy & Security > Developer Mode).
+2. Run `npm run ios:device` and pick the iPhone.
+3. The first time only, trust the certificate on the iPhone: Settings > General > VPN & Device Management > Apple Development.
+
+A free signature expires after 7 days, and then the app won't open. Run `npm run ios:device` again. Reinstalling keeps all progress.
+
 ### Building the Android APK
 
 ```sh
 npx eas-cli@latest build -p android --profile apk
 ```
 
-When the build finishes, open its page on expo.dev on the Android phone and install the APK. Android asks once to allow installs from that source.
+When the build finishes, download the APK from its page on expo.dev and send the file to the Android phone. Android asks once to allow installs from that source. EAS signs every APK with the same key, so a new one installs over the old one and keeps all progress.
 
 ### Publishing an update
 
@@ -85,5 +98,4 @@ When the build finishes, open its page on expo.dev on the Android phone and inst
 npx eas-cli@latest update --channel production --environment production --message "added Summer 2025"
 ```
 
-- **Android APK:** the app downloads the update the next time it launches and switches to it on the launch after that.
-- **iPhone (Expo Go):** open the update in Expo Go by scanning the QR code from the update's page on expo.dev, or from `https://qr.expo.dev/eas-update?projectId=<project id>&runtimeVersion=exposdk:58.0.0&channel=production`.
+On both phones the app downloads the update the next time it launches and switches to it on the launch after that.

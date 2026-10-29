@@ -100,7 +100,9 @@ Answering in the practice Modes is select-then-Check. Around them: Bookmarks, a 
 ## Implementation Decisions
 
 ### Platform constraints
-- Everything stays inside Expo Go's bundled modules: react-native-svg, Reanimated 4, Gesture Handler 3, expo-haptics, expo-symbols, expo-notifications (local only), expo-keep-awake and the community date picker. iPhone users keep running the app in Expo Go.
+- The app is installed as its own build, not run in Expo Go (ADR 0005): a Release build from Xcode with the free Personal Team on iPhone, an EAS APK on Android.
+- Native modules aren't limited to Expo Go's set any more, but each one needs new builds on both phones. The planned ones are react-native-svg, Reanimated 4, Gesture Handler 3, expo-haptics, expo-symbols, expo-notifications, expo-keep-awake and the community date picker.
+- expo-notifications runs with `enableRemoteNotifications: false`, because the free Personal Team can't sign push notifications.
 
 ### RTL (ADR 0004)
 - The layout direction is forced in the app, not taken from `I18nManager`:

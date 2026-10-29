@@ -11,3 +11,5 @@ So the app forces the direction itself:
 Text alignment follows the Yoga direction on both platforms, so text is never given `textAlign: 'right'`, which would mean *end*. Fabric swaps `left` and `right` styles according to the *system* direction, so they mean different things on different phones. Layout therefore uses only `start` and `end`, and horizontal transforms multiply by the `FORWARD` sign in `src/ui/motion.ts`.
 
 Native controls that RN doesn't lay out, such as switches and date pickers, still follow the phone's own direction. That is accepted.
+
+Since ADR 0005 the app no longer runs in Expo Go, so `forcesRTL` takes effect as well. The forced layout stays, so the direction never depends on it.

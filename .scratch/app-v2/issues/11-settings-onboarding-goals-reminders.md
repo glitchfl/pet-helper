@@ -20,3 +20,4 @@
 - [ ] Appearance and text size apply immediately.
 - [ ] Reset clears Responses, Bookmarks and Attempts after confirmation.
 - [ ] Onboarding shows once.
+- [ ] The iPhone build still signs with the free Personal Team, so expo-notifications is configured with `enableRemoteNotifications: false` (ADR 0005).

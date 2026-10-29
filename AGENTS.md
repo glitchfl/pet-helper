@@ -29,13 +29,13 @@ Run lint and typecheck before declaring any task done.
 - Import `Link`, `router`, and `useLocalSearchParams` from `expo-router`.
 - Docs: https://docs.expo.dev/router/introduction.md
 
-## Building with EAS
+## Building and shipping
 
-Use EAS to build, sign, and submit the app in the cloud (`eas build`, `eas submit`) and to ship over-the-air updates (`eas update`) — no local Xcode or Android Studio required. Run EAS CLI as `bunx eas-cli <command>` in Bun projects, or `npx eas-cli@latest <command>` otherwise; substitute that for bare `eas` in docs examples.
+The app never runs in Expo Go (ADR 0005). The Android APK is built in the cloud with EAS (`eas build -p android --profile apk`), the iPhone build is compiled locally with Xcode and the free Personal Team (`npm run ios:device`), and both get over-the-air updates from `eas update`. Run EAS CLI as `npx eas-cli@latest <command>`; substitute that for bare `eas` in docs examples. There is no iOS EAS build, because it would need a paid Apple Developer account.
 Docs: https://docs.expo.dev/eas/index.md
 
 ## Rules
 
 - If `ios/` and `android/` directories do not exist, they are generated (Continuous Native Generation). Never create or edit them by hand — configure native behavior in `app.json` and config plugins.
-- Expo Go only includes its bundled native modules. After adding a library with native code, the app needs a development build: `npx expo run:ios|android` locally, or `eas build --profile development`.
+- After adding a library with native code, rebuild the app with `npm run ios` / `npm run android`. It also changes the fingerprint runtime version, so the phones need new builds before they can take updates that use it.
 - Prefer recommended Expo modules over third-party libraries, and check your available skills before adding dependencies. Docs: https://docs.expo.dev/versions/latest/index.md

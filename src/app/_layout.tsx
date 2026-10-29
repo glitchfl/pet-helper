@@ -21,7 +21,7 @@ export default function RootLayout() {
     },
   };
 
-  // expo go ignores the forcesRTL config plugin, so rtl is forced here instead of trusting I18nManager (ADR 0004):
+  // rtl is forced here instead of trusting I18nManager (ADR 0004):
   // the root view's direction flows down the whole layout tree, and LocaleProvider flips the native stacks
   return (
     <GestureHandlerRootView style={[styles.root, { backgroundColor: colors.background }]}>

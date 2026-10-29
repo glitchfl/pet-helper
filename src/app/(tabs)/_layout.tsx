@@ -4,7 +4,7 @@ import { useColors } from '@/ui/theme';
 export default function TabsLayout() {
   const colors = useColors();
 
-  // on ios the tab bar follows the native app's direction, which expo go keeps ltr, so it's forced rtl here
+  // on ios the tab bar follows the native app's direction instead of the layout's, so it's forced rtl here too
   return (
     <NativeTabs
       tintColor={colors.accent}
